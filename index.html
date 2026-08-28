@@ -317,9 +317,82 @@
     .grid-4, .grid-3, .grid-2, .form-row, .kv{grid-template-columns:1fr;}
     .search{display:none;}
   }
+
+  /* ===== Login gate ===== */
+  #loginGate{
+    position:fixed; inset:0; z-index:500;
+    background:
+      radial-gradient(1100px 600px at 15% -10%, rgba(31,111,99,0.35), transparent 60%),
+      radial-gradient(900px 500px at 100% 110%, rgba(168,90,42,0.25), transparent 55%),
+      var(--teal-900);
+    display:flex; align-items:center; justify-content:center; padding:20px;
+  }
+  .login-card{
+    width:100%; max-width:380px; background:var(--panel); border-radius:16px;
+    box-shadow:0 30px 70px -20px rgba(0,0,0,0.5); overflow:hidden;
+  }
+  .login-head{padding:30px 30px 20px; text-align:center;}
+  .login-brand-mark{
+    width:46px; height:46px; border-radius:11px; margin:0 auto 14px;
+    background:linear-gradient(155deg, var(--teal-500), var(--teal-800));
+    display:flex; align-items:center; justify-content:center;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.15);
+  }
+  .login-brand-mark svg{width:22px; height:22px;}
+  .login-head h2{font-size:19px; font-weight:700;}
+  .login-head p{font-size:12.5px; color:var(--muted); margin-top:5px;}
+  .login-body{padding:6px 30px 28px; display:flex; flex-direction:column; gap:14px;}
+  .user-picker{display:flex; flex-direction:column; gap:7px;}
+  .user-opt{
+    display:flex; align-items:center; gap:10px; border:1.5px solid var(--line); border-radius:9px;
+    padding:9px 12px; cursor:pointer; text-align:left; background:var(--panel);
+  }
+  .user-opt .ua{width:26px; height:26px; border-radius:50%; background:var(--panel-2); border:1px solid var(--line); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; color:var(--ink-soft); flex:0 0 26px;}
+  .user-opt span{font-size:13.4px; font-weight:600;}
+  .user-opt.selected{border-color:var(--teal-600); background:var(--teal-100);}
+  .user-opt.selected .ua{background:var(--teal-700); color:#fff; border-color:var(--teal-700);}
+  .login-error{
+    display:none; font-size:12.5px; color:var(--red-700); background:var(--red-100);
+    border-radius:8px; padding:8px 11px; font-weight:600;
+  }
+  .login-error.show{display:block;}
+  .login-foot{padding:14px 30px 26px; text-align:center; font-size:11px; color:var(--muted);}
 </style>
 </head>
 <body>
+
+<!-- ============ LOGIN GATE ============ -->
+<div id="loginGate">
+  <div class="login-card">
+    <div class="login-head">
+      <div class="login-brand-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#EAF3F0" stroke-width="1.8"><path d="M12 3v18M4 8l8-5 8 5M4 8v10l8 4M4 8l8 4m8-4v10l-8 4m8-14l-8 4m0 10V12"/></svg>
+      </div>
+      <h2>Cléra</h2>
+      <p>Ingresa con tu nombre y la contraseña del equipo para ver el mockup.</p>
+    </div>
+    <div class="login-body">
+      <div class="field">
+        <label>Usuario</label>
+        <div class="user-picker" id="userPicker">
+          <div class="user-opt" data-user="esaupreciado" onclick="selectLoginUser(this)"><span class="ua">EP</span><span>esaupreciado</span></div>
+          <div class="user-opt" data-user="octaviorojas" onclick="selectLoginUser(this)"><span class="ua">OR</span><span>octaviorojas</span></div>
+          <div class="user-opt" data-user="fernandoreyes" onclick="selectLoginUser(this)"><span class="ua">FR</span><span>fernandoreyes</span></div>
+        </div>
+      </div>
+      <div class="field">
+        <label>Contraseña</label>
+        <input class="input" type="password" id="loginPassword" placeholder="Contraseña del equipo" onkeydown="if(event.key==='Enter') tryLogin()">
+      </div>
+      <div class="login-error" id="loginError">Usuario o contraseña incorrectos. Intenta de nuevo.</div>
+      <button class="btn btn-primary btn-block" onclick="tryLogin()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/></svg>
+        Entrar al mockup
+      </button>
+    </div>
+    <div class="login-foot">Acceso interno de demostración · Cléra 2026</div>
+  </div>
+</div>
 
 <div class="app">
   <!-- ============ SIDEBAR ============ -->
@@ -1654,6 +1727,44 @@ function updateNavBadges(){
   badgeCorr.textContent = corrAbiertas;
   badgeCorr.style.display = corrAbiertas>0 ? '' : 'none';
 }
+
+/* ===================== LOGIN GATE ===================== */
+const ALLOWED_USERS = ["esaupreciado", "octaviorojas", "fernandoreyes"];
+const TEAM_PASSWORD = "Clera2026";
+let loginSelectedUser = null;
+
+function selectLoginUser(el){
+  document.querySelectorAll('.user-opt').forEach(o=>o.classList.remove('selected'));
+  el.classList.add('selected');
+  loginSelectedUser = el.dataset.user;
+  document.getElementById('loginError').classList.remove('show');
+}
+
+function tryLogin(){
+  const pass = document.getElementById('loginPassword').value;
+  const errEl = document.getElementById('loginError');
+  if(!loginSelectedUser || !ALLOWED_USERS.includes(loginSelectedUser) || pass !== TEAM_PASSWORD){
+    errEl.classList.add('show');
+    return;
+  }
+  errEl.classList.remove('show');
+  try{ localStorage.setItem('cleraSession', loginSelectedUser); }catch(e){}
+  grantAccess(loginSelectedUser);
+}
+
+function grantAccess(user){
+  document.getElementById('loginGate').style.display = 'none';
+  document.querySelector('.user-name').textContent = user;
+}
+
+function checkExistingSession(){
+  let saved = null;
+  try{ saved = localStorage.getItem('cleraSession'); }catch(e){}
+  if(saved && ALLOWED_USERS.includes(saved)){
+    grantAccess(saved);
+  }
+}
+checkExistingSession();
 
 /* ===================== INIT ===================== */
 populateAreaFilter();
