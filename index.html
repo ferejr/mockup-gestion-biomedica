@@ -52,6 +52,19 @@
 
   /* ===== App shell ===== */
   .app{display:flex; min-height:100vh;}
+  #providerApp{display:none; min-height:100vh;}
+  .prov-hosp-card{
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow);
+    padding:18px 20px; cursor:pointer; transition:border-color .12s ease, transform .12s ease;
+  }
+  .prov-hosp-card:hover{border-color:var(--teal-500); transform:translateY(-1px);}
+  .prov-hosp-top{display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:10px;}
+  .prov-hosp-stats{display:flex; gap:18px; margin-top:14px; padding-top:12px; border-top:1px solid var(--line-soft);}
+  .prov-hosp-stat .n{font-family:'IBM Plex Mono',monospace; font-weight:700; font-size:17px;}
+  .prov-hosp-stat .l{font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.04em;}
+  .prov-back-btn{display:inline-flex; align-items:center; gap:6px; font-size:12.5px; font-weight:600; color:var(--muted); background:none; border:none; padding:0; margin-bottom:10px;}
+  .prov-back-btn:hover{color:var(--ink);}
+  .prov-back-btn svg{width:15px; height:15px;}
 
   /* Sidebar */
   .sidebar{
@@ -201,6 +214,11 @@
     text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:0.05em; color:var(--muted);
     font-weight:600; padding:0 14px 10px; border-bottom:1px solid var(--line);
   }
+  th.sortable{cursor:pointer; user-select:none; white-space:nowrap;}
+  th.sortable:hover{color:var(--ink-soft);}
+  th.sortable .sort-arrow{font-size:9px; margin-left:3px; opacity:.5;}
+  th.sortable.sort-active{color:var(--teal-700);}
+  th.sortable.sort-active .sort-arrow{opacity:1;}
   tbody td{padding:12px 14px; border-bottom:1px solid var(--line-soft); font-size:13.4px; vertical-align:middle;}
   tbody tr:last-child td{border-bottom:none;}
   tbody tr.clickable:hover{background:var(--panel-2); cursor:pointer;}
@@ -274,13 +292,25 @@
   .urgency-opt.sel-urg.selected{border-color:var(--amber-600); background:var(--amber-100); color:#8a6606;}
   .urgency-opt.sel-reg.selected{border-color:var(--green-600); background:var(--green-100); color:var(--green-600);}
 
-  .toast{
-    position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(12px); opacity:0;
-    background:var(--teal-900); color:#fff; padding:12px 20px; border-radius:9px; font-size:13.5px; font-weight:600;
-    display:flex; align-items:center; gap:9px; box-shadow:0 12px 30px -8px rgba(0,0,0,0.35); z-index:200; transition:all .2s ease; pointer-events:none;
+  .toast-stack{
+    position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
+    display:flex; flex-direction:column-reverse; gap:9px; z-index:200;
+    align-items:center; pointer-events:none; max-width:92vw;
   }
-  .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
-  .toast svg{width:16px; height:16px; color:#8FD6BE;}
+  .toast-item{
+    background:var(--teal-900); color:#fff; padding:12px 18px; border-radius:9px; font-size:13.3px; font-weight:600;
+    display:flex; align-items:center; gap:10px; box-shadow:0 12px 30px -8px rgba(0,0,0,0.35);
+    opacity:0; transform:translateY(12px); transition:all .25s ease; max-width:420px; text-align:left;
+  }
+  .toast-item.show{opacity:1; transform:translateY(0);}
+  .toast-item svg{width:16px; height:16px; flex:0 0 16px;}
+  .toast-item.tone-info svg{color:#8FD6BE;}
+  .toast-item.tone-success{background:var(--teal-700);}
+  .toast-item.tone-success svg{color:#BEF0D8;}
+  .toast-item.tone-warning{background:#7A5A12;}
+  .toast-item.tone-warning svg{color:#F4D98B;}
+  .toast-item.tone-danger{background:var(--red-700);}
+  .toast-item.tone-danger svg{color:#F7C7BE;}
 
   /* Checklist module */
   .check-card{border:1px solid var(--line); border-radius:10px; padding:14px 16px; background:var(--panel); display:flex; flex-direction:column; gap:10px;}
@@ -378,6 +408,9 @@
           <div class="user-opt" data-user="esaupreciado" onclick="selectLoginUser(this)"><span class="ua">EP</span><span>esaupreciado</span></div>
           <div class="user-opt" data-user="octaviorojas" onclick="selectLoginUser(this)"><span class="ua">OR</span><span>octaviorojas</span></div>
           <div class="user-opt" data-user="fernandoreyes" onclick="selectLoginUser(this)"><span class="ua">FR</span><span>fernandoreyes</span></div>
+          <div style="border-top:1px dashed var(--line); margin:4px 0 2px; padding-top:8px; font-size:10.5px; text-transform:uppercase; letter-spacing:0.06em; color:var(--muted);">Equipo proveedor</div>
+          <div class="user-opt" data-user="clera_admin" onclick="selectLoginUser(this)"><span class="ua">CA</span><span>clera_admin</span></div>
+          <div class="user-opt" data-user="antonioperez" onclick="selectLoginUser(this)"><span class="ua">AP</span><span>antonioperez</span></div>
         </div>
       </div>
       <div class="field">
@@ -409,16 +442,16 @@
 
     <div class="nav-group-label">General</div>
     <div class="nav">
-      <button class="nav-item active" data-view="dashboard">
+      <button class="nav-item active" data-view="dashboard" data-roles="admin,coordinador,tecnico">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
         Panel General
       </button>
-      <button class="nav-item" data-view="inventario">
+      <button class="nav-item" data-view="inventario" data-roles="admin,coordinador,tecnico">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>
         Inventario
         <span class="nav-badge" id="navBadgeInv">9</span>
       </button>
-      <button class="nav-item" data-view="mantenimiento">
+      <button class="nav-item" data-view="mantenimiento" data-roles="admin,coordinador">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14.7 6.3a4 4 0 10-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 005.4-5.4l-2.6 2.6-2-2 2.6-2.6z"/></svg>
         Programa de Mantenimiento
       </button>
@@ -426,17 +459,17 @@
 
     <div class="nav-group-label">Operación diaria</div>
     <div class="nav">
-      <button class="nav-item" data-view="revisiones">
+      <button class="nav-item" data-view="revisiones" data-roles="admin,coordinador,tecnico">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M9 3v2a1 1 0 001 1h4a1 1 0 001-1V3"/><path d="M8.5 12.5l2 2 4.5-4.5"/></svg>
         Revisiones Diarias
         <span class="nav-badge" id="navBadgeRev">0</span>
       </button>
-      <button class="nav-item" data-view="correctivo">
+      <button class="nav-item" data-view="correctivo" data-roles="admin,coordinador">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10.5 3.5l10 10-3.5 3.5-10-10a2.5 2.5 0 013.5-3.5z"/><path d="M3 21l4.5-1.5L3 15.5V21z"/><path d="M13 6l5 5"/></svg>
-        Mant. Correctivo
+        Órdenes de Mantenimiento
         <span class="nav-badge urgent" id="navBadgeCorr">0</span>
       </button>
-      <button class="nav-item" data-view="indicadores">
+      <button class="nav-item" data-view="indicadores" data-roles="admin,coordinador">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19V9m6 10V4m6 15v-7"/></svg>
         Indicadores
       </button>
@@ -444,12 +477,16 @@
 
     <div class="sidebar-foot">
       <div class="user-chip">
-        <div class="user-avatar">MG</div>
+        <div class="user-avatar" id="sidebarAvatar">–</div>
         <div>
-          <div class="user-name">M. Gutiérrez</div>
-          <div class="user-role">Coordinadora Biomédica</div>
+          <div class="user-name" id="sidebarUserName">—</div>
+          <div class="user-role" id="sidebarUserRole">—</div>
         </div>
       </div>
+      <button class="nav-item" style="margin-top:8px; color:#9CB8AE;" onclick="logout()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+        Cerrar sesión
+      </button>
     </div>
   </aside>
 
@@ -475,18 +512,18 @@
       <section class="view active" id="view-dashboard">
         <div class="view-head">
           <div>
-            <h2>Buenos días, Mariana</h2>
+            <h2 id="dashGreeting">Buenos días</h2>
             <div class="view-desc">Esto es lo que necesita atención hoy en el parque de equipo médico.</div>
           </div>
         </div>
 
-        <div class="grid grid-4" style="margin-bottom:18px;">
-          <div class="card kpi">
+        <div class="grid grid-4" id="dashKpiGrid" style="margin-bottom:18px;">
+          <div class="card kpi" id="kpiEquiposRegistrados">
             <div class="kpi-label">Equipos registrados <span class="kpi-dot" style="background:var(--teal-600)"></span></div>
             <div class="kpi-value">9</div>
             <div class="kpi-sub">6 en Quirófano / UCI · 3 en áreas de apoyo</div>
           </div>
-          <div class="card kpi">
+          <div class="card kpi" id="kpiIncluidosIMP">
             <div class="kpi-label">Incluidos en programa IMP <span class="kpi-dot" style="background:var(--teal-600)"></span></div>
             <div class="kpi-value">6 <span style="font-size:14px; color:var(--muted); font-weight:500;">/ 9</span></div>
             <div class="kpi-sub">Clasificación GE ≥ 12 según metodología de riesgo</div>
@@ -503,7 +540,7 @@
           </div>
         </div>
 
-        <div class="grid" style="grid-template-columns:1.3fr 1fr; margin-bottom:18px;">
+        <div class="grid" id="dashDetailGrid" style="grid-template-columns:1.3fr 1fr; margin-bottom:18px;">
           <div class="card card-pad">
             <div class="section-title">Equipos críticos (GE alto, clasificación I)</div>
             <div class="section-sub">Requieren mayor frecuencia de inspección y mantenimiento preventivo.</div>
@@ -530,7 +567,7 @@
             <h2>Inventario de Equipos</h2>
             <div class="view-desc">Registro general y detallado de todos los equipos médicos del hospital.</div>
           </div>
-          <button class="btn btn-primary" onclick="openAddEquipoModal()">
+          <button class="btn btn-primary" id="btnAddEquipo" onclick="openAddEquipoModal()">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>
             Agregar equipo
           </button>
@@ -596,20 +633,56 @@
         </div>
 
         <div class="grid grid-3" style="margin-bottom:18px;">
-          <div class="card card-pad">
-            <div class="pill pill-red" style="margin-bottom:8px;">Trimestral</div>
-            <div class="kpi-value" style="font-size:24px;">GE ≥ 19</div>
-            <div class="kpi-sub">Inspección y mantenimiento preventivo cada 4 meses</div>
+          <div class="card kpi">
+            <div class="kpi-label">Vencidos <span class="kpi-dot" style="background:var(--red-700)"></span></div>
+            <div class="kpi-value" id="kpiVencidos">0</div>
+            <div class="kpi-sub">Ya pasó su fecha de mantenimiento preventivo programada</div>
           </div>
-          <div class="card card-pad">
-            <div class="pill pill-amber" style="margin-bottom:8px;">Semestral</div>
-            <div class="kpi-value" style="font-size:24px;">GE 15–18</div>
-            <div class="kpi-sub">Inspección y mantenimiento preventivo cada 6 meses</div>
+          <div class="card kpi">
+            <div class="kpi-label">Sin historial — por programar <span class="kpi-dot" style="background:var(--amber-600)"></span></div>
+            <div class="kpi-value" id="kpiSinHistorial">0</div>
+            <div class="kpi-sub">Nunca se les ha registrado un mantenimiento preventivo</div>
           </div>
-          <div class="card card-pad">
-            <div class="pill pill-green" style="margin-bottom:8px;">Anual</div>
-            <div class="kpi-value" style="font-size:24px;">GE 12–14</div>
-            <div class="kpi-sub">Inspección y mantenimiento preventivo cada 12 meses</div>
+          <div class="card kpi">
+            <div class="kpi-label">Programados este mes <span class="kpi-dot" style="background:var(--teal-600)"></span></div>
+            <div class="kpi-value" id="kpiEsteMes">0</div>
+            <div class="kpi-sub">Dentro de plazo, con fecha prevista en el mes en curso</div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:18px;">
+          <div class="card-pad" style="padding-bottom:6px; display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;">
+            <div>
+              <div class="section-title">Mantenimiento preventivo programado</div>
+              <div class="section-sub">Equipos incluidos en el programa (GE ≥ 12) cuyo mantenimiento preventivo cae dentro del mes seleccionado, según su frecuencia (trimestral / semestral / anual). En el mes actual también incluye lo vencido y sin historial. Usa "Registrar realizado" cuando se complete, para recalcular su próxima fecha.</div>
+            </div>
+            <span class="pill pill-clay" style="font-size:12.5px;"><span id="imScheduleCount">0</span> equipo(s)</span>
+          </div>
+          <div class="card-pad" style="padding-top:4px; padding-bottom:14px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+            <button class="icon-btn" id="imMesPrev" onclick="cambiarMesProgramacion(-1)" title="Mes anterior">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+            </button>
+            <div class="mono" id="imScheduleMonthLabel" style="font-weight:700; font-size:14px; min-width:170px; text-align:center;">este mes</div>
+            <button class="icon-btn" id="imMesNext" onclick="cambiarMesProgramacion(1)" title="Mes siguiente">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+            </button>
+            <button class="btn btn-ghost btn-sm" id="imMesHoy" style="display:none;" onclick="imScheduleOffset=0; renderProgramacionMes();">Volver a este mes</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Equipo</th>
+                  <th>Frecuencia</th>
+                  <th>Último preventivo</th>
+                  <th>Próximo programado</th>
+                  <th>Programación</th>
+                  <th>Estado del equipo</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="imScheduleBody"></tbody>
+            </table>
           </div>
         </div>
 
@@ -628,11 +701,13 @@
             <table>
               <thead>
                 <tr>
-                  <th>Equipo</th>
-                  <th style="width:230px;">Composición del GE</th>
-                  <th>GE</th>
+                  <th class="sortable" onclick="ordenarMantenimiento('nombre')" id="th-nombre">Equipo <span class="sort-arrow">▲</span></th>
+                  <th style="width:210px;">Composición del GE</th>
+                  <th class="sortable" onclick="ordenarMantenimiento('ge')" id="th-ge">GE <span class="sort-arrow">▼</span></th>
                   <th>Clasificación</th>
                   <th>Frecuencia</th>
+                  <th class="sortable" onclick="ordenarMantenimiento('ultimo')" id="th-ultimo">Último mantenimiento <span class="sort-arrow">▼</span></th>
+                  <th class="sortable" onclick="ordenarMantenimiento('proximo')" id="th-proximo">Próximo mantenimiento <span class="sort-arrow">▲</span></th>
                   <th></th>
                 </tr>
               </thead>
@@ -649,15 +724,21 @@
             <h2>Revisiones Diarias de Rutina</h2>
             <div class="view-desc">Checklist de verificación diaria por equipo y solicitudes de revisión fuera de programa.</div>
           </div>
-          <button class="btn btn-clay" onclick="openSolicitudModal()">
+          <button class="btn btn-clay" id="btnSolicitarRevision" onclick="openSolicitudModal()">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v6m-3-3h6"/><circle cx="12" cy="12" r="9"/></svg>
             Solicitar revisión de equipo
+          </button>
+          <button class="btn btn-clay" id="btnSolicitarServicioTecnico" style="display:none;" onclick="openSolicitudServicioModal()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a4 4 0 10-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 005.4-5.4l-2.6 2.6-2-2 2.6-2.6z"/></svg>
+            Solicitar envío a servicio
           </button>
         </div>
 
         <div class="tabs" style="margin-top:-4px;">
           <button class="tab-btn active" data-rtab="checklist" onclick="switchRevTab('checklist')">Checklist del día</button>
-          <button class="tab-btn" data-rtab="solicitudes" onclick="switchRevTab('solicitudes')">Solicitudes de revisión <span id="solTabCount" class="mono" style="color:var(--muted); font-weight:500;"></span></button>
+          <button class="tab-btn" id="tabSolicitudesBtn" data-rtab="solicitudes" onclick="switchRevTab('solicitudes')">Solicitudes de revisión <span id="solTabCount" class="mono" style="color:var(--muted); font-weight:500;"></span></button>
+          <button class="tab-btn" id="tabAprobacionesBtn" data-rtab="aprobaciones" onclick="switchRevTab('aprobaciones')" style="display:none;">Aprobaciones pendientes <span id="aprobTabCount" class="mono" style="color:var(--muted); font-weight:500;"></span></button>
+          <button class="tab-btn" id="tabMisSolicitudesBtn" data-rtab="misSolicitudes" onclick="switchRevTab('misSolicitudes')" style="display:none;">Mis solicitudes <span id="misSolTabCount" class="mono" style="color:var(--muted); font-weight:500;"></span></button>
         </div>
 
         <div id="revTab-checklist">
@@ -667,14 +748,34 @@
         <div id="revTab-solicitudes" style="display:none;">
           <div class="grid grid-2" id="solicitudesGrid" style="align-items:start;"></div>
         </div>
+
+        <div id="revTab-aprobaciones" style="display:none;">
+          <div class="scope-note" style="margin-bottom:14px;">Solicitudes generadas por el Técnico Biomédico (rutinas con hallazgos o envíos a servicio) que requieren tu aprobación antes de convertirse en una orden real visible para el proveedor.</div>
+          <div class="grid grid-2" id="aprobacionesGrid" style="align-items:start;"></div>
+        </div>
+
+        <div id="revTab-misSolicitudes" style="display:none;">
+          <div class="scope-note" style="margin-bottom:14px;">El estado de tus solicitudes de envío a servicio y de tus rutinas con hallazgos: si siguen pendientes, si el Coordinador o Director ya las aprobó (y qué orden se generó), o si las rechazó y por qué.</div>
+          <div class="grid grid-2" id="misSolicitudesGrid" style="align-items:start;"></div>
+        </div>
       </section>
 
       <!-- ============ MANTENIMIENTO CORRECTIVO ============ -->
       <section class="view" id="view-correctivo">
         <div class="view-head">
           <div>
-            <h2>Mantenimiento Correctivo</h2>
+            <h2>Órdenes de Mantenimiento</h2>
             <div class="view-desc">Órdenes de reparación, incluyendo las generadas desde solicitudes de revisión.</div>
+          </div>
+        </div>
+
+        <div id="corrValidarBanner" class="card card-pad" style="display:none; margin-bottom:18px; border-color:var(--clay-600); background:var(--clay-100); align-items:center; gap:12px; flex-wrap:wrap; justify-content:space-between;">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="var(--clay-600)" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg>
+            <div>
+              <div style="font-weight:700; color:var(--clay-600); font-size:13.5px;"><span id="corrValidarCount">0</span> orden(es) resueltas por el proveedor, pendientes de tu validación</div>
+              <div style="font-size:12px; color:var(--ink-soft);">Revisa lo que reportó el proveedor y confirma para cerrarlas definitivamente.</div>
+            </div>
           </div>
         </div>
 
@@ -728,8 +829,45 @@
           <div class="card kpi">
             <div class="kpi-label">Tiempo promedio de respuesta</div>
             <div class="kpi-value">3.2h</div>
-            <div class="kpi-sub">Dato ilustrativo · mantenimiento correctivo urgente</div>
+            <div class="kpi-sub">Dato ilustrativo · órdenes de mantenimiento urgentes</div>
           </div>
+        </div>
+
+        <div class="grid grid-3" style="margin-bottom:18px;">
+          <div class="card kpi">
+            <div class="kpi-label">Preventivo vs Correctivo <span class="kpi-dot" style="background:var(--teal-600)"></span></div>
+            <div class="kpi-value" id="kpiRatioPrevCorr" style="font-size:22px;">—</div>
+            <div class="kpi-sub">Proporción de eventos de mantenimiento realizados, según su tipo</div>
+          </div>
+          <div class="card kpi">
+            <div class="kpi-label">Costo en mantenimiento <span class="kpi-dot" style="background:var(--clay-600)"></span></div>
+            <div class="kpi-value" id="kpiCostoTotal" style="font-size:22px;">—</div>
+            <div class="kpi-sub">Suma de costos estimados capturados por el proveedor</div>
+          </div>
+          <div class="card kpi">
+            <div class="kpi-label">Inactividad promedio por orden <span class="kpi-dot" style="background:var(--amber-600)"></span></div>
+            <div class="kpi-value" id="kpiPromInactividad" style="font-size:22px;">—</div>
+            <div class="kpi-sub">Días entre que se reporta y se cierra una orden</div>
+          </div>
+        </div>
+
+        <div class="grid" style="grid-template-columns:1fr 1fr; margin-bottom:18px;">
+          <div class="card card-pad">
+            <div class="section-title">Preventivo vs Correctivo</div>
+            <div class="section-sub">Menos correctivo y más preventivo significa menos averías inesperadas y menor costo — es el indicador clave para evitar el mantenimiento reactivo.</div>
+            <div id="indRatioBar"></div>
+          </div>
+          <div class="card card-pad">
+            <div class="section-title">Días de inactividad por equipo</div>
+            <div class="section-sub">Equipos con más días acumulados fuera de operación (suma de todas sus órdenes cerradas).</div>
+            <div id="indInactividadList"></div>
+          </div>
+        </div>
+
+        <div class="card card-pad" style="margin-bottom:18px;">
+          <div class="section-title">Costo de mantenimiento por categoría</div>
+          <div class="section-sub">Costos estimados capturados por el proveedor al resolver cada orden.</div>
+          <div id="indCostoDetalle"></div>
         </div>
 
         <div class="grid" style="grid-template-columns:1fr 1fr;">
@@ -744,7 +882,7 @@
             <div class="scope-note">Estas barras son ilustrativas para el mockup; en producción se calcularían a partir del historial real de IMP por área.</div>
           </div>
           <div class="card card-pad">
-            <div class="section-title">Mantenimiento correctivo por categoría</div>
+            <div class="section-title">Órdenes de mantenimiento por categoría</div>
             <div class="section-sub">Distribución de órdenes abiertas en los últimos 30 días (dato ilustrativo).</div>
             <div class="bar-row"><div class="bar-label">Urgente emergencia</div><div class="bar-track"><div class="bar-fill" style="width:18%; background:var(--red-700)"></div></div><div class="bar-value">18%</div></div>
             <div class="bar-row"><div class="bar-label">Urgente</div><div class="bar-track"><div class="bar-fill" style="width:34%; background:var(--amber-600)"></div></div><div class="bar-value">34%</div></div>
@@ -755,6 +893,235 @@
         </div>
       </section>
 
+    </div>
+  </div>
+</div>
+
+<!-- ============ PORTAL DE PROVEEDOR (CLÉRA) ============ -->
+<div id="providerApp">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#EAF3F0" stroke-width="1.8"><path d="M12 3v18M4 8l8-5 8 5M4 8v10l8 4M4 8l8 4m8-4v10l-8 4m8-14l-8 4m0 10V12"/></svg>
+      </div>
+      <div>
+        <div class="brand-name">Cléra</div>
+        <div class="brand-sub">Portal Proveedor</div>
+      </div>
+    </div>
+
+    <div class="nav-group-label">Operación</div>
+    <div class="nav">
+      <button class="nav-item active" data-pview="panel" onclick="switchProviderView('panel')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+        Panel General
+      </button>
+      <button class="nav-item" data-pview="hospitales" onclick="switchProviderView('hospitales')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 9h1M14 9h1M9 13h1M14 13h1M9 17h1M14 17h1"/></svg>
+        Mis Hospitales
+      </button>
+      <button class="nav-item" data-pview="ordenes" onclick="switchProviderView('ordenes')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10.5 3.5l10 10-3.5 3.5-10-10a2.5 2.5 0 013.5-3.5z"/><path d="M3 21l4.5-1.5L3 15.5V21z"/><path d="M13 6l5 5"/></svg>
+        Órdenes de Servicio
+        <span class="nav-badge urgent" id="provNavBadgeOrdenes">0</span>
+      </button>
+    </div>
+
+    <div class="sidebar-foot">
+      <div class="user-chip">
+        <div class="user-avatar" id="provSidebarAvatar" style="background:var(--clay-600);">–</div>
+        <div>
+          <div class="user-name" id="provSidebarUserName">—</div>
+          <div class="user-role" id="provSidebarUserRole">—</div>
+        </div>
+      </div>
+      <button class="nav-item" style="margin-top:8px; color:#9CB8AE;" onclick="logout()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+        Cerrar sesión
+      </button>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div>
+        <div class="topbar-eyebrow">Cléra · Gestión de clientes</div>
+        <h1 id="provTopbarTitle">Panel General</h1>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- ---- PANEL GENERAL ---- -->
+      <section class="view active" id="pview-panel">
+        <div class="view-head">
+          <div>
+            <h2>Panel General</h2>
+            <div class="view-desc">Vista consolidada de todo tu portafolio de hospitales cliente.</div>
+          </div>
+        </div>
+
+        <div class="grid grid-4" style="margin-bottom:18px;">
+          <div class="card kpi">
+            <div class="kpi-label">Hospitales activos <span class="kpi-dot" style="background:var(--teal-600)"></span></div>
+            <div class="kpi-value" id="panelHospitales">0</div>
+          </div>
+          <div class="card kpi">
+            <div class="kpi-label">Equipos bajo gestión <span class="kpi-dot" style="background:var(--teal-600)"></span></div>
+            <div class="kpi-value" id="panelEquipos">0</div>
+          </div>
+          <div class="card kpi">
+            <div class="kpi-label">Órdenes abiertas <span class="kpi-dot" style="background:var(--red-700)"></span></div>
+            <div class="kpi-value" id="panelAbiertas">0</div>
+          </div>
+          <div class="card kpi">
+            <div class="kpi-label">Por validar del hospital <span class="kpi-dot" style="background:var(--clay-600)"></span></div>
+            <div class="kpi-value" id="panelPorValidar">0</div>
+          </div>
+        </div>
+
+        <div class="grid grid-3" style="margin-bottom:18px;">
+          <div class="card kpi">
+            <div class="kpi-label">Tiempo promedio de resolución</div>
+            <div class="kpi-value" id="panelTiempoResolucion">—</div>
+            <div class="kpi-sub">Desde reportada hasta marcada como resuelta por el proveedor</div>
+          </div>
+          <div class="card kpi">
+            <div class="kpi-label">Órdenes cerradas (validadas)</div>
+            <div class="kpi-value" id="panelCerradas">0</div>
+            <div class="kpi-sub">Confirmadas y cerradas por el hospital</div>
+          </div>
+          <div class="card kpi">
+            <div class="kpi-label">Contratos por vencer <span class="kpi-dot" style="background:var(--amber-600)"></span></div>
+            <div class="kpi-value" id="panelContratos">0</div>
+            <div class="kpi-sub">Renovación dentro de los próximos 60 días</div>
+          </div>
+        </div>
+
+        <div class="card card-pad">
+          <div class="section-title">Órdenes abiertas por hospital</div>
+          <div class="section-sub">Distribución de la carga de trabajo actual entre tus clientes.</div>
+          <div id="panelPorHospital"></div>
+        </div>
+      </section>
+
+      <!-- ---- LISTA DE HOSPITALES ---- -->
+      <section class="view" id="pview-hospitales">
+        <div class="view-head">
+          <div>
+            <h2>Mis Hospitales</h2>
+            <div class="view-desc">Hospitales y clínicas con contrato activo de gestión de ingeniería clínica.</div>
+          </div>
+        </div>
+        <div class="grid grid-3" id="provHospitalesGrid"></div>
+      </section>
+
+      <!-- ---- DETALLE DE HOSPITAL ---- -->
+      <section class="view" id="pview-hospital-detalle">
+        <button class="prov-back-btn" onclick="switchProviderView('hospitales')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+          Volver a Mis Hospitales
+        </button>
+        <div class="view-head">
+          <div>
+            <h2 id="provHospNombre">—</h2>
+            <div class="view-desc" id="provHospSub">—</div>
+          </div>
+        </div>
+
+        <div class="tabs">
+          <button class="tab-btn active" data-phtab="info" onclick="switchProviderHospitalTab('info')">Información general</button>
+          <button class="tab-btn" data-phtab="equipos" onclick="switchProviderHospitalTab('equipos')">Equipos <span id="provHospEquiposCount" class="mono" style="color:var(--muted); font-weight:500;"></span></button>
+          <button class="tab-btn" data-phtab="ordenes" onclick="switchProviderHospitalTab('ordenes')">Órdenes de servicio <span id="provHospOrdenesCount" class="mono" style="color:var(--muted); font-weight:500;"></span></button>
+        </div>
+
+        <div class="tab-pane active" id="phtab-info">
+          <div class="card card-pad">
+            <div class="kv" id="provHospInfoKv"></div>
+          </div>
+        </div>
+
+        <div class="tab-pane" id="phtab-equipos">
+          <div class="card">
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Equipo</th><th>Folio</th><th>Marca</th><th>Ubicación</th><th>Estado</th></tr></thead>
+                <tbody id="provHospEquiposBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-pane" id="phtab-ordenes">
+          <div class="card">
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Folio</th><th>Equipo</th><th>Categoría</th><th>Estado</th><th>Técnico</th><th>Fecha</th><th></th></tr></thead>
+                <tbody id="provHospOrdenesBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ---- ÓRDENES DE SERVICIO (GLOBAL) ---- -->
+      <section class="view" id="pview-ordenes">
+        <div class="view-head">
+          <div>
+            <h2>Órdenes de Servicio</h2>
+            <div class="view-desc">Todas las órdenes de todos tus hospitales cliente, en un solo lugar.</div>
+          </div>
+        </div>
+        <div class="grid grid-4" style="margin-bottom:18px;">
+          <div class="card kpi"><div class="kpi-label">Urgente emergencia <span class="kpi-dot" style="background:var(--red-700)"></span></div><div class="kpi-value" id="provOrdEmerg">0</div></div>
+          <div class="card kpi"><div class="kpi-label">Urgente <span class="kpi-dot" style="background:var(--amber-600)"></span></div><div class="kpi-value" id="provOrdUrg">0</div></div>
+          <div class="card kpi"><div class="kpi-label">Regular <span class="kpi-dot" style="background:var(--green-600)"></span></div><div class="kpi-value" id="provOrdReg">0</div></div>
+          <div class="card kpi"><div class="kpi-label">Cerradas <span class="kpi-dot" style="background:var(--muted)"></span></div><div class="kpi-value" id="provOrdCerradas">0</div></div>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Folio</th><th>Hospital</th><th>Equipo</th><th>Categoría</th><th>Estado</th><th>Técnico</th><th>Fecha</th><th></th></tr></thead>
+              <tbody id="provOrdenesGlobalBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: DETALLE / CIERRE DE ORDEN (PROVEEDOR) ============ -->
+<div class="modal-overlay" id="provOrderModalOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <h3 id="provOrderTitle">Orden de servicio</h3>
+        <p id="provOrderSub">—</p>
+      </div>
+      <button class="drawer-close" onclick="closeProviderOrderModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div id="provOrderInfo"></div>
+      <div class="field">
+        <label>Diagnóstico / solución <span class="hint">— lo que registre tu equipo técnico</span></label>
+        <textarea class="input" id="provOrderNotas" placeholder="Ej. Se reemplazó fusible de línea y se recalibró el sensor. Equipo probado y operando correctamente."></textarea>
+        <div class="hint" style="margin-top:-4px;">Al marcarla como resuelta, el hospital deberá confirmarla para cerrarla definitivamente.</div>
+      </div>
+      <div class="field">
+        <label>Costo estimado (MXN) <span class="hint">— opcional, refacciones + mano de obra</span></label>
+        <input class="input" type="number" min="0" step="1" id="provOrderCosto" placeholder="Ej. 2400">
+      </div>
+    </div>
+    <div class="modal-foot" id="provOrderFoot" style="justify-content:space-between;">
+      <button class="btn btn-ghost" onclick="guardarNotasOrden()">Guardar notas</button>
+      <button class="btn btn-primary" onclick="resolverYCerrarOrden()">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg>
+        Marcar como resuelto
+      </button>
     </div>
   </div>
 </div>
@@ -773,6 +1140,7 @@
     </button>
   </div>
   <div class="drawer-body">
+    <div id="drawerActions" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px;"></div>
     <div class="tabs">
       <button class="tab-btn active" data-etab="general" onclick="switchEquipoTab('general')">General</button>
       <button class="tab-btn" data-etab="detalle" onclick="switchEquipoTab('detalle')">Detallada</button>
@@ -792,12 +1160,12 @@
     </div>
 
     <div class="tab-pane" id="etab-mantenimiento">
-      <div class="section-sub">Clasificación de riesgo vigente para este equipo.</div>
+      <div class="section-sub">Clasificación de riesgo vigente y todo el historial de mantenimiento preventivo y correctivo de este equipo.</div>
       <div id="drawerGE"></div>
     </div>
 
     <div class="tab-pane" id="etab-historial">
-      <div class="section-sub">Últimos eventos registrados para este equipo.</div>
+      <div class="section-sub">Historial completo del equipo desde su alta en el software: mantenimientos, cambios de estado y validaciones.</div>
       <div class="timeline" id="drawerHistorial"></div>
     </div>
   </div>
@@ -829,7 +1197,7 @@
         </div>
         <div class="field">
           <label>Solicitante</label>
-          <input class="input" id="solSolicitante" placeholder="Nombre de quien reporta">
+          <input class="input" id="solSolicitante" readonly style="background:var(--panel-2); color:var(--ink-soft); font-weight:600;">
         </div>
       </div>
       <div class="field">
@@ -867,6 +1235,91 @@
         Enviar solicitud
       </button>
     </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: SOLICITAR ENVÍO A SERVICIO (TÉCNICO) ============ -->
+<div class="modal-overlay" id="solicitudServicioModalOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <h3>Solicitar envío a servicio</h3>
+        <p>Tu solicitud queda pendiente de aprobación del Coordinador o Director antes de convertirse en una orden.</p>
+      </div>
+      <button class="drawer-close" onclick="closeSolicitudServicioModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label>Equipo</label>
+        <select class="select" id="solServicioEquipo">
+          <option value="">Selecciona un equipo del inventario…</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Motivo <span class="hint">— qué observaste que requiere atención</span></label>
+        <textarea class="input" id="solServicioMotivo" placeholder="Ej. El equipo hace un ruido inusual al encender y la pantalla parpadea."></textarea>
+      </div>
+      <div class="field">
+        <label>Urgencia</label>
+        <div class="urgency-picker" id="solServicioUrgencia">
+          <div class="urgency-opt sel-emerg" data-val="Urgente por emergencia" onclick="selectSolServicioUrgencia(this)">Urgente por<br>emergencia</div>
+          <div class="urgency-opt sel-urg" data-val="Urgente" onclick="selectSolServicioUrgencia(this)">Urgente</div>
+          <div class="urgency-opt sel-reg selected" data-val="Regular" onclick="selectSolServicioUrgencia(this)">Regular</div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeSolicitudServicioModal()">Cancelar</button>
+      <button class="btn btn-clay" onclick="submitSolicitudServicio()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+        Enviar solicitud
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: PUNTOS PENDIENTES DEL CHECKLIST ============ -->
+<div class="modal-overlay" id="issueModalOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <h3 id="issueModalTitle">Revisión con puntos pendientes</h3>
+        <p>Indica el motivo de cada punto sin marcar. Al guardar, se genera automáticamente una orden de mantenimiento.</p>
+      </div>
+      <button class="drawer-close" onclick="closeChecklistIssueModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body" id="issueModalBody"></div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeChecklistIssueModal()">Cancelar</button>
+      <button class="btn btn-clay" onclick="confirmChecklistIssue()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+        Guardar y enviar a mantenimiento
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: DETALLE / VALIDACIÓN DE ORDEN (HOSPITAL) ============ -->
+<div class="modal-overlay" id="hospOrderModalOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <h3 id="hospOrderTitle">Orden de mantenimiento</h3>
+        <p id="hospOrderSub">—</p>
+      </div>
+      <button class="drawer-close" onclick="closeHospOrderModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div id="hospOrderInfo"></div>
+      <div id="hospOrderValidacion"></div>
+    </div>
+    <div class="modal-foot" id="hospOrderFoot"></div>
   </div>
 </div>
 
@@ -988,10 +1441,45 @@
   </div>
 </div>
 
-<div class="toast" id="toast">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg>
-  <span id="toastMsg">Guardado</span>
+<!-- ============ MODAL: EDITAR EQUIPO ============ -->
+<div class="modal-overlay" id="editEquipoOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <h3>Editar equipo</h3>
+        <p>Modifica la información general del equipo.</p>
+      </div>
+      <button class="drawer-close" onclick="closeEditEquipoModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="field"><label>Nombre del equipo</label><input class="input" id="editNombre"></div>
+        <div class="field"><label>Marca / modelo</label><input class="input" id="editMarca"></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>Número de serie</label><input class="input" id="editSerie"></div>
+        <div class="field"><label>Ubicación / servicio</label><input class="input" id="editUbicacion"></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>Categoría funcional</label>
+          <select class="select" id="editCategoria"><option>Terapéutico</option><option>Diagnóstico</option><option>Analítico</option><option>Otros</option></select>
+        </div>
+        <div class="field"><label>Proveedor</label><input class="input" id="editProveedor"></div>
+      </div>
+      <div class="field"><label>Estado operativo</label>
+        <select class="select" id="editEstado"><option>Operativo</option><option>En mantenimiento</option><option>Fuera de servicio</option></select>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeEditEquipoModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveEditEquipo()">Guardar cambios</button>
+    </div>
+  </div>
 </div>
+
+<div class="toast-stack" id="toastStack"></div>
 
 <script>
 /* =========================================================
@@ -1005,7 +1493,8 @@ let equipos = [
   {
     id:"EQ-0142", nombre:"Equipo de anestesia", marca:"Dräger Perseus A500", serie:"DR-2021-3391",
     area:"Quirófano 1", categoria:"Terapéutico", estado:"Operativo",
-    adquisicion:"2021-03-14", proveedor:"Dräger México", tipoRiesgo:"Alto",
+    adquisicion:"2021-03-14", instalacion:"2021-04-05", fechaAlta:"2025-08-28", vidaUtilAnios:12,
+    proveedor:"Dräger México", proveedorServicio:"Cléra — Gestión integral (contrato vigente)", tipoRiesgo:"Alto",
     ge:{funcion:10, aplicacion:5, mantenimiento:5, antecedentes:0},
     accesorios:["Vaporizador de agente inhalado","Circuito de paciente reutilizable","Sensor de CO₂"],
     manuales:["Manual de operador (ES)", "Manual de servicio técnico"],
@@ -1019,7 +1508,8 @@ let equipos = [
   {
     id:"EQ-0198", nombre:"Desfibrilador / monitor", marca:"Philips HeartStart XL+", serie:"PH-2020-1187",
     area:"Urgencias", categoria:"Terapéutico", estado:"Operativo",
-    adquisicion:"2020-06-02", proveedor:"Philips Healthcare", tipoRiesgo:"Alto",
+    adquisicion:"2020-06-02", instalacion:"2020-06-20", fechaAlta:"2025-08-28", vidaUtilAnios:10,
+    proveedor:"Philips Healthcare", proveedorServicio:"Cléra — Gestión integral (contrato vigente)", tipoRiesgo:"Alto",
     ge:{funcion:9, aplicacion:5, mantenimiento:4, antecedentes:0},
     accesorios:["Palas de desfibrilación adulto/pediátrico","Cable de 3 derivaciones"],
     manuales:["Manual de operador (ES)"],
@@ -1032,7 +1522,8 @@ let equipos = [
   {
     id:"EQ-0231", nombre:"Electrocardiógrafo, 3 canales", marca:"GE MAC 2000", serie:"GE-2019-0765",
     area:"Cardiología", categoria:"Diagnóstico", estado:"Operativo",
-    adquisicion:"2019-09-18", proveedor:"GE Healthcare", tipoRiesgo:"Medio",
+    adquisicion:"2019-09-18", instalacion:"2019-10-02", fechaAlta:"2025-08-28", vidaUtilAnios:8,
+    proveedor:"GE Healthcare", proveedorServicio:"Cléra — Gestión integral (contrato vigente)", tipoRiesgo:"Medio",
     ge:{funcion:6, aplicacion:3, mantenimiento:5, antecedentes:2},
     accesorios:["Cable de paciente 10 derivaciones","Electrodos reutilizables"],
     manuales:["Manual de operador (ES)","Guía rápida"],
@@ -1045,7 +1536,8 @@ let equipos = [
   {
     id:"EQ-0305", nombre:"Sistema de videoendoscopia", marca:"Olympus EVIS X1", serie:"OL-2022-4402",
     area:"Endoscopía", categoria:"Diagnóstico", estado:"Operativo",
-    adquisicion:"2022-01-25", proveedor:"Olympus Latinoamérica", tipoRiesgo:"Medio",
+    adquisicion:"2022-01-25", instalacion:"2022-02-10", fechaAlta:"2025-08-28", vidaUtilAnios:8,
+    proveedor:"Olympus Latinoamérica", proveedorServicio:"Cléra — Gestión integral (contrato vigente)", tipoRiesgo:"Medio",
     ge:{funcion:6, aplicacion:3, mantenimiento:3, antecedentes:0},
     accesorios:["Endoscopio flexible","Fuente de luz LED","Monitor 4K"],
     manuales:["Manual de operador (ES/EN)"],
@@ -1057,7 +1549,8 @@ let equipos = [
   {
     id:"EQ-0356", nombre:"Unidad electroquirúrgica", marca:"Valleylab FT10", serie:"VL-2021-9012",
     area:"Quirófano 2", categoria:"Terapéutico", estado:"En mantenimiento",
-    adquisicion:"2021-11-03", proveedor:"Medtronic", tipoRiesgo:"Alto",
+    adquisicion:"2021-11-03", instalacion:"2021-11-22", fechaAlta:"2025-08-28", vidaUtilAnios:10,
+    proveedor:"Medtronic", proveedorServicio:"Cléra — Gestión integral (contrato vigente)", tipoRiesgo:"Alto",
     ge:{funcion:9, aplicacion:4, mantenimiento:3, antecedentes:0},
     accesorios:["Lápiz electroquirúrgico","Placa de retorno de paciente"],
     manuales:["Manual de operador (ES)"],
@@ -1069,7 +1562,8 @@ let equipos = [
   {
     id:"EQ-0410", nombre:"Monitor fetal", marca:"Edan F9 Express", serie:"ED-2020-7734",
     area:"Tococirugía", categoria:"Diagnóstico", estado:"Operativo",
-    adquisicion:"2020-04-11", proveedor:"Edan Instruments", tipoRiesgo:"Medio",
+    adquisicion:"2020-04-11", instalacion:"2020-04-28", fechaAlta:"2025-08-28", vidaUtilAnios:8,
+    proveedor:"Edan Instruments", proveedorServicio:"Cléra — Gestión integral (contrato vigente)", tipoRiesgo:"Medio",
     ge:{funcion:7, aplicacion:3, mantenimiento:3, antecedentes:0},
     accesorios:["Transductor de FCF","Transductor de actividad uterina"],
     manuales:["Manual de operador (ES)"],
@@ -1081,7 +1575,8 @@ let equipos = [
   {
     id:"EQ-0512", nombre:"Lámpara quirúrgica portátil", marca:"Welch Allyn LS-150", serie:"WA-2018-2290",
     area:"Quirófano 2", categoria:"Otros", estado:"Operativo",
-    adquisicion:"2018-02-20", proveedor:"Welch Allyn", tipoRiesgo:"Bajo",
+    adquisicion:"2018-02-20", instalacion:"2018-03-05", fechaAlta:"2025-08-28", vidaUtilAnios:12,
+    proveedor:"Welch Allyn", proveedorServicio:"Cléra — Gestión integral (contrato vigente)", tipoRiesgo:"Bajo",
     ge:{funcion:2, aplicacion:4, mantenimiento:3, antecedentes:-1},
     accesorios:["Batería de respaldo"],
     manuales:["Manual de operador (ES)"],
@@ -1093,7 +1588,8 @@ let equipos = [
   {
     id:"EQ-0577", nombre:"Fuente de luz para fibra óptica", marca:"Storz Xenon 300", serie:"ST-2019-5581",
     area:"Endoscopía", categoria:"Otros", estado:"Operativo",
-    adquisicion:"2019-07-30", proveedor:"Karl Storz", tipoRiesgo:"Bajo",
+    adquisicion:"2019-07-30", instalacion:"2019-08-15", fechaAlta:"2025-08-28", vidaUtilAnios:8,
+    proveedor:"Karl Storz", proveedorServicio:"Cléra — Gestión integral (contrato vigente)", tipoRiesgo:"Bajo",
     ge:{funcion:7, aplicacion:3, mantenimiento:3, antecedentes:-2},
     accesorios:["Cable de fibra óptica"],
     manuales:["Manual de operador (ES)"],
@@ -1103,7 +1599,8 @@ let equipos = [
   {
     id:"EQ-0640", nombre:"Computadora, micro (PC)", marca:"Dell OptiPlex", serie:"DL-2023-1120",
     area:"Administración", categoria:"Analítico", estado:"Operativo",
-    adquisicion:"2023-05-08", proveedor:"Dell México", tipoRiesgo:"Bajo",
+    adquisicion:"2023-05-08", instalacion:"2023-05-15", fechaAlta:"2025-08-28", vidaUtilAnios:5,
+    proveedor:"Dell México", proveedorServicio:"Cléra — Gestión integral (contrato vigente)", tipoRiesgo:"Bajo",
     ge:{funcion:3, aplicacion:3, mantenimiento:1, antecedentes:-2},
     accesorios:[],
     manuales:[],
@@ -1115,12 +1612,102 @@ let equipos = [
 let checklists = {}; // por equipo.id: {items:[{label, checked}], responsable, nota, guardadoHoy:bool, hora}
 let solicitudes = []; // reportes generados desde el modal
 let correctivo = [
-  {folio:"MC-0891", equipoId:"EQ-0356", origen:"Ronda de piso", categoria:"Regular", estado:"En proceso", tecnico:"J. Alvarado", fecha:"2026-08-24"},
-  {folio:"MC-0887", equipoId:"EQ-0231", origen:"Reporte de usuario", categoria:"Urgente", estado:"Cerrada", tecnico:"L. Ramírez", fecha:"2026-08-18"},
-  {folio:"MC-0879", equipoId:"EQ-0512", origen:"IMP programado", categoria:"Pospuesta", estado:"Abierta", tecnico:"Sin asignar", fecha:"2026-08-11"}
+  {folio:"MC-0891", equipoId:"EQ-0356", origen:"Ronda de piso", categoria:"Regular", estado:"Resuelto por proveedor", tecnico:"J. Alvarado", fecha:"2026-08-24",
+    notasProveedor:"Se verificó potencia de salida y se ajustó calibración del generador. Equipo probado en vacío y con carga, funcionando dentro de parámetros.", resueltoPor:"clera_admin", fechaResuelto:"2026-08-26", validadoPor:"", fechaCierre:"", comentarioValidacion:"", costoEstimado:1450,
+    bitacora:[
+      {fecha:"2026-08-24", hora:"10:05", usuario:"J. Alvarado", evento:"Orden creada durante ronda de piso."},
+      {fecha:"2026-08-26", hora:"15:30", usuario:"clera_admin", evento:"Marcada como resuelta por el proveedor."}
+    ]},
+  {folio:"MC-0887", equipoId:"EQ-0231", origen:"Reporte de usuario", categoria:"Urgente", estado:"Cerrada", tecnico:"L. Ramírez", fecha:"2026-08-18",
+    notasProveedor:"Se sustituyó el cable de paciente dañado y se realizó prueba de trazo en las 10 derivaciones. Sin hallazgos adicionales.", resueltoPor:"clera_admin", fechaResuelto:"2026-08-19", validadoPor:"esaupreciado", fechaCierre:"2026-08-20", comentarioValidacion:"Verificado en sitio, equipo operando con normalidad.", costoEstimado:2400,
+    bitacora:[
+      {fecha:"2026-08-18", hora:"09:12", usuario:"Personal del hospital", evento:"Orden creada — reporte de usuario."},
+      {fecha:"2026-08-19", hora:"14:50", usuario:"clera_admin", evento:"Marcada como resuelta por el proveedor."},
+      {fecha:"2026-08-20", hora:"09:40", usuario:"esaupreciado", evento:"Validada y cerrada por el hospital."}
+    ]},
+  {folio:"MC-0879", equipoId:"EQ-0512", origen:"IMP programado", categoria:"Pospuesta", estado:"Abierta", tecnico:"Antonio Pérez", fecha:"2026-08-11",
+    notasProveedor:"", resueltoPor:"", fechaResuelto:"", validadoPor:"", fechaCierre:"", comentarioValidacion:"",
+    bitacora:[{fecha:"2026-08-11", hora:"08:00", usuario:"Sistema", evento:"Orden creada — mantenimiento preventivo programado."}]}
 ];
 let correctivoFolioSeq = 892;
 let solicitudFolioSeq = 1;
+
+// Solicitudes generadas por el Técnico Biomédico (rutina con hallazgos, o envío a
+// servicio) que deben ser aprobadas por el Coordinador/Director antes de convertirse
+// en una orden real de Órdenes de Mantenimiento.
+let solicitudesPendientes = [
+  {id:"AP-0001", tipo:"checklist", equipoId:"EQ-0410", motivo:"Verificación de alarmas audibles y visuales: la alarma de FCF se escucha muy baja, posible falla del altavoz.",
+    urgencia:"Regular", solicitadoPor:"octaviorojas", fecha:"2026-08-27", hora:"08:20", estado:"Pendiente", motivoRechazo:"", ordenFolio:""},
+  {id:"AP-0002", tipo:"servicio", equipoId:"EQ-0577", motivo:"La fuente de luz parpadea intermitentemente al usarse en endoscopías, dificultando la visualización.",
+    urgencia:"Urgente", solicitadoPor:"octaviorojas", fecha:"2026-08-27", hora:"12:05", estado:"Pendiente", motivoRechazo:"", ordenFolio:""}
+];
+let solicitudPendienteSeq = 3;
+
+/* =========================================================
+   DATOS DEL PORTAL DE PROVEEDOR (CLÉRA)
+   "Hospital General del Valle" (HOSP-1) es el mismo hospital
+   modelado arriba: sus equipos y órdenes son los mismos arreglos
+   `equipos` y `correctivo`, así que lo que cierre el proveedor
+   aquí se refleja también en el software del hospital.
+   Los otros dos hospitales son clientes de ejemplo, con datos
+   propios y más simples (solo para este portal).
+========================================================= */
+// Técnicos de campo del proveedor disponibles para asignar a una orden.
+// "Antonio Pérez" tiene su propio login (antonioperez); los demás son de ejemplo.
+const TECNICOS_PROVEEDOR = ["Antonio Pérez", "Diana Cortés", "Marco Salinas"];
+
+let hospitales = [
+  {
+    id:"HOSP-1", nombre:"Hospital General del Valle", esReal:true,
+    tipo:"Privado", ciudad:"Zapopan, Jalisco", direccion:"Av. Patria 1450, Col. Jardines de Guadalupe",
+    contacto:"M. Gutiérrez — Coordinación Biomédica", telefono:"33 1234 5678",
+    contrato:"Gestión integral (preventivo + correctivo)", inicioServicio:"2024-02-01",
+    contratoValor:"$68,000 MXN / mes", contratoRenovacion:"2027-02-01"
+  },
+  {
+    id:"HOSP-2", nombre:"Clínica Santa Fe", esReal:false,
+    tipo:"Privado", ciudad:"Zapopan, Jalisco", direccion:"Av. Acueducto 890, Puerta de Hierro",
+    contacto:"Dr. Raúl Beltrán — Dirección Médica", telefono:"33 2233 4455",
+    contrato:"Mantenimiento preventivo trimestral", inicioServicio:"2025-05-14",
+    contratoValor:"$22,500 MXN / mes", contratoRenovacion:"2026-10-15",
+    equiposResumen:[
+      {id:"HOSP2-EQ1", nombre:"Incubadora neonatal", marca:"Dräger Caleo", area:"Neonatología", estado:"Operativo", serie:"DR-2022-1145"},
+      {id:"HOSP2-EQ2", nombre:"Ventilador de transporte", marca:"Hamilton T1", area:"Urgencias", estado:"Operativo", serie:"HM-2021-3390"},
+      {id:"HOSP2-EQ3", nombre:"Monitor de signos vitales", marca:"Mindray uMEC12", area:"Hospitalización", estado:"En mantenimiento", serie:"MD-2020-7712"},
+      {id:"HOSP2-EQ4", nombre:"Bomba de infusión", marca:"B. Braun Infusomat", area:"UCI", estado:"Fuera de servicio", serie:"BB-2019-4481"}
+    ],
+    ordenesResumen:[
+      {folio:"MC-S201", equipoId:"HOSP2-EQ4", equipoNombre:"Bomba de infusión", origen:"Reporte de usuario", detalle:"Pantalla no enciende, posible falla de fuente interna.", categoria:"Urgente", estado:"Abierta", tecnico:"Antonio Pérez", fecha:"2026-08-22", notasProveedor:"", resueltoPor:"", fechaResuelto:"", validadoPor:"", fechaCierre:"", comentarioValidacion:"",
+        bitacora:[{fecha:"2026-08-22", hora:"09:14", usuario:"Personal del hospital", evento:"Orden creada — reporte de usuario."}]},
+      {folio:"MC-S198", equipoId:"HOSP2-EQ3", equipoNombre:"Monitor de signos vitales", origen:"IMP programado", detalle:"Mantenimiento preventivo trimestral en curso.", categoria:"Regular", estado:"En proceso", tecnico:"J. Alvarado", fecha:"2026-08-19", notasProveedor:"", resueltoPor:"", fechaResuelto:"", validadoPor:"", fechaCierre:"", comentarioValidacion:"",
+        bitacora:[{fecha:"2026-08-19", hora:"08:00", usuario:"Sistema", evento:"Orden creada — mantenimiento preventivo programado."}, {fecha:"2026-08-19", hora:"11:20", usuario:"clera_admin", evento:"Técnico asignado, orden puesta en proceso."}]},
+      {folio:"MC-S190", equipoId:"HOSP2-EQ1", equipoNombre:"Incubadora neonatal", origen:"Reporte de usuario", detalle:"Alarma de temperatura se activaba sin causa aparente.", categoria:"Urgente emergencia", estado:"Cerrada", tecnico:"L. Ramírez", fecha:"2026-07-30", notasProveedor:"Se recalibró sensor de temperatura y se sustituyó cable dañado. Equipo probado 24h sin incidentes.", resueltoPor:"clera_admin", fechaResuelto:"2026-08-01", validadoPor:"Dr. Raúl Beltrán", fechaCierre:"2026-08-02", comentarioValidacion:"Confirmado con enfermería del área, sin nuevas alarmas.",
+        bitacora:[
+          {fecha:"2026-07-30", hora:"07:45", usuario:"Personal del hospital", evento:"Orden creada — reporte de usuario (urgente por emergencia)."},
+          {fecha:"2026-08-01", hora:"16:10", usuario:"clera_admin", evento:"Marcada como resuelta por el proveedor."},
+          {fecha:"2026-08-02", hora:"10:05", usuario:"Dr. Raúl Beltrán", evento:"Validada y cerrada por el hospital."}
+        ]}
+    ]
+  },
+  {
+    id:"HOSP-3", nombre:"Hospital Regional Tonalá", esReal:false,
+    tipo:"Público", ciudad:"Tonalá, Jalisco", direccion:"Calz. Tonalá 456, Col. Loma Dorada",
+    contacto:"Ing. Patricia Loza — Ingeniería Biomédica", telefono:"33 5566 7788",
+    contrato:"Servicio por tiempo y material", inicioServicio:"2025-11-02",
+    contratoValor:"Por evento (tarifa + refacciones)", contratoRenovacion:"2027-03-01",
+    equiposResumen:[
+      {id:"HOSP3-EQ1", nombre:"Rayos X portátil", marca:"GE AMX 240", area:"Urgencias", estado:"Operativo", serie:"GE-2018-5521"},
+      {id:"HOSP3-EQ2", nombre:"Autoclave de vapor", marca:"Tuttnauer 3870", area:"CEyE", estado:"Operativo", serie:"TT-2020-2290"},
+      {id:"HOSP3-EQ3", nombre:"Ultrasonido portátil", marca:"Sonosite Edge II", area:"Urgencias", estado:"Operativo", serie:"SS-2021-8834"}
+    ],
+    ordenesResumen:[
+      {folio:"MC-S310", equipoId:"HOSP3-EQ2", equipoNombre:"Autoclave de vapor", origen:"Reporte de usuario", detalle:"Fuga de vapor en junta de puerta.", categoria:"Regular", estado:"Abierta", tecnico:"Sin asignar", fecha:"2026-08-20", notasProveedor:"", resueltoPor:"", fechaResuelto:"", validadoPor:"", fechaCierre:"", comentarioValidacion:"",
+        bitacora:[{fecha:"2026-08-20", hora:"13:40", usuario:"Personal del hospital", evento:"Orden creada — reporte de usuario."}]},
+      {folio:"MC-S305", equipoId:"HOSP3-EQ1", equipoNombre:"Rayos X portátil", origen:"IMP programado", detalle:"Verificación anual de blindaje y calibración.", categoria:"Pospuesta", estado:"Abierta", tecnico:"Sin asignar", fecha:"2026-08-05", notasProveedor:"", resueltoPor:"", fechaResuelto:"", validadoPor:"", fechaCierre:"", comentarioValidacion:"",
+        bitacora:[{fecha:"2026-08-05", hora:"08:00", usuario:"Sistema", evento:"Orden creada — mantenimiento preventivo programado."}]}
+    ]
+  }
+];
 
 const CHECK_ITEMS = [
   "Verificación visual de carcasa, cables y conectores",
@@ -1137,7 +1724,8 @@ function initChecklists(){
       responsable:"",
       nota:"",
       guardadoHoy:false,
-      hora:""
+      hora:"",
+      incidencias:[]
     };
   });
 }
@@ -1163,12 +1751,109 @@ function fmtDate(iso){
   return d.toLocaleDateString('es-MX',{day:'2-digit', month:'short', year:'numeric'});
 }
 function equipoById(id){ return equipos.find(e=>e.id===id); }
-function showToast(msg){
-  const t = document.getElementById('toast');
-  document.getElementById('toastMsg').textContent = msg;
-  t.classList.add('show');
-  clearTimeout(window.__toastTimer);
-  window.__toastTimer = setTimeout(()=>t.classList.remove('show'), 2600);
+
+// Traduce el puntaje de "función" del cálculo GE a la descripción clínica de la
+// tabla del programa de mantenimiento (Apoyo vital, Cirugía y cuidados intensivos, etc).
+const FUNCION_CLINICA_LABELS = {
+  10:"Apoyo vital", 9:"Cirugía y cuidados intensivos", 8:"Fisioterapia y tratamiento",
+  7:"Control de cirugía y cuidados intensivos", 6:"Control fisiológico adicional y diagnóstico",
+  5:"Análisis de laboratorio", 4:"Accesorios de laboratorio", 3:"Computadoras y afines",
+  2:"Relacionados con el paciente y otros"
+};
+function funcionClinicaLabel(e){ return FUNCION_CLINICA_LABELS[e.ge.funcion] || 'Sin clasificar'; }
+
+// Vida útil estimada en texto, con el año en que se cumpliría según la fecha de adquisición.
+function vidaUtilLabel(e){
+  if(!e.vidaUtilAnios) return 'Sin registrar';
+  const anioAdquisicion = new Date(e.adquisicion + 'T00:00:00').getFullYear();
+  const anioVence = anioAdquisicion + e.vidaUtilAnios;
+  return e.vidaUtilAnios + ' años (vence ' + anioVence + ')';
+}
+const TOAST_ICONS = {
+  info: '<path d="M20 6L9 17l-5-5"/>',
+  success: '<path d="M20 6L9 17l-5-5"/>',
+  warning: '<path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/>',
+  danger: '<path d="M12 9v4"/><path d="M12 17h.01"/><circle cx="12" cy="12" r="9"/>'
+};
+function showToast(msg, tone){
+  tone = tone || 'info';
+  const stack = document.getElementById('toastStack');
+  const el = document.createElement('div');
+  el.className = 'toast-item tone-' + tone;
+  el.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">${TOAST_ICONS[tone] || TOAST_ICONS.info}</svg><span>${msg}</span>`;
+  stack.appendChild(el);
+  requestAnimationFrame(()=> el.classList.add('show'));
+  setTimeout(()=>{
+    el.classList.remove('show');
+    setTimeout(()=> el.remove(), 300);
+  }, 4200);
+}
+
+/* ---- Notificaciones al iniciar sesión, según el rol ---- */
+function pctCumplimientoHoy(){
+  const total = equipos.length;
+  const completados = Object.values(checklists).filter(c=>c.guardadoHoy).length;
+  return {completados, total, pct: total ? Math.round((completados/total)*100) : 0};
+}
+function equiposNoOperativos(){
+  return {
+    fueraServicio: equipos.filter(e=>e.estado==='Fuera de servicio').length,
+    enMantenimiento: equipos.filter(e=>e.estado==='En mantenimiento').length
+  };
+}
+function ordenesEmergenciaActivas(){
+  return correctivo.filter(c=>c.categoria==='Urgente emergencia' && c.estado!=='Cerrada');
+}
+function equiposConIMPVencido(){
+  // Compara la fecha del último mantenimiento preventivo registrado contra la
+  // frecuencia que le corresponde según su clasificación GE (4 / 6 / 12 meses).
+  const hoy = new Date();
+  return equipos.filter(e=>{
+    const total = geTotal(e.ge);
+    if(geClasificacion(total) !== 'I') return false;
+    const freq = geFrecuencia(total);
+    const meses = freq === 'Trimestral' ? 4 : (freq === 'Semestral' ? 6 : 12);
+    const preventivos = (e.historial || []).filter(h=>h.tipo==='Preventivo').sort((a,b)=> b.fecha.localeCompare(a.fecha));
+    if(preventivos.length === 0) return true;
+    const limite = new Date(preventivos[0].fecha + 'T00:00:00');
+    limite.setMonth(limite.getMonth() + meses);
+    return hoy >= limite;
+  });
+}
+function showLoginNotifications(user){
+  const role = USER_ROLES[user].role;
+  const prog = pctCumplimientoHoy();
+  const progMsg = `Revisión diaria: ${prog.pct}% completado (${prog.completados}/${prog.total} equipos)`;
+  const queue = [{msg: progMsg, tone: prog.pct === 100 ? 'success' : 'info'}];
+
+  if(role !== 'tecnico'){
+    const {fueraServicio, enMantenimiento} = equiposNoOperativos();
+    if(fueraServicio > 0 || enMantenimiento > 0){
+      queue.push({msg:`${fueraServicio} equipo(s) fuera de servicio · ${enMantenimiento} en mantenimiento`, tone:'warning'});
+    }
+
+    const emergencias = ordenesEmergenciaActivas();
+    if(emergencias.length > 0){
+      const nombres = emergencias.map(o=>{ const eq = equipoById(o.equipoId); return eq ? eq.nombre : null; }).filter(Boolean);
+      const listado = nombres.slice(0,2).join(', ') + (nombres.length>2 ? '…' : '');
+      queue.push({msg:`${emergencias.length} emergencia(s) activa(s): ${listado}`, tone:'danger'});
+    }
+
+    const vencidos = equiposConIMPVencido();
+    if(vencidos.length > 0){
+      const msg = role === 'admin'
+        ? `${vencidos.length} equipo(s) requieren su mantenimiento preventivo programado`
+        : `Tienes ${vencidos.length} equipo(s) por agendar su mantenimiento preventivo`;
+      queue.push({msg, tone:'warning'});
+    }
+
+    const porAprobar = solicitudesPendientes.filter(p=>p.estado==='Pendiente').length;
+    if(porAprobar > 0){
+      queue.push({msg:`${porAprobar} solicitud(es) del técnico esperando tu aprobación`, tone:'warning'});
+    }
+  }
+
+  queue.forEach((t,i)=> setTimeout(()=> showToast(t.msg, t.tone), 500 + i*650));
 }
 function statusPill(estado){
   if(estado==="Operativo") return `<span class="pill pill-green">Operativo</span>`;
@@ -1202,7 +1887,7 @@ function geBarHTML(ge, size){
 /* ===================== NAVIGATION ===================== */
 const viewTitles = {
   dashboard:"Panel General", inventario:"Inventario de Equipos", mantenimiento:"Programa de Mantenimiento",
-  revisiones:"Revisiones Diarias", correctivo:"Mantenimiento Correctivo", indicadores:"Indicadores de Desempeño"
+  revisiones:"Revisiones Diarias", correctivo:"Órdenes de Mantenimiento", indicadores:"Indicadores de Desempeño"
 };
 document.querySelectorAll('.nav-item[data-view]').forEach(btn=>{
   btn.addEventListener('click', ()=>{
@@ -1269,11 +1954,61 @@ function renderInventario(){
 }
 
 /* ===================== RENDER: MANTENIMIENTO ===================== */
+let mantenimientoSort = {key:'ge', dir:'desc'};
+function resumenMantenimiento(e){
+  const hist = (e.historial || []).filter(h=> h.tipo==='Preventivo' || h.tipo==='Correctivo').slice().sort((a,b)=> b.fecha.localeCompare(a.fecha));
+  const ultimo = hist.length ? hist[0] : null;
+  const d = datosPreventivo(e); // null si el equipo no está incluido en el programa (clasificación N)
+  return {
+    ultimoFecha: ultimo ? ultimo.fecha : null,
+    ultimoTipo: ultimo ? ultimo.tipo : null,
+    proxima: d ? d.proxima : null,
+    incluido: !!d
+  };
+}
+function ordenarMantenimiento(key){
+  if(mantenimientoSort.key === key){
+    mantenimientoSort.dir = mantenimientoSort.dir === 'asc' ? 'desc' : 'asc';
+  } else {
+    mantenimientoSort.key = key;
+    mantenimientoSort.dir = (key === 'nombre') ? 'asc' : 'desc';
+  }
+  renderMantenimiento();
+}
 function renderMantenimiento(){
   const body = document.getElementById('mantenimientoBody');
-  const sorted = [...equipos].sort((a,b)=>geTotal(b.ge)-geTotal(a.ge));
-  body.innerHTML = sorted.map(e=>{
+
+  const items = equipos.map(e=>({e, r: resumenMantenimiento(e)}));
+  const {key, dir} = mantenimientoSort;
+  const valor = (item) => {
+    if(key === 'nombre') return item.e.nombre.toLowerCase();
+    if(key === 'ge') return geTotal(item.e.ge);
+    if(key === 'ultimo') return item.r.ultimoFecha ? new Date(item.r.ultimoFecha+'T00:00:00').getTime() : -Infinity;
+    if(key === 'proximo') return item.r.proxima ? item.r.proxima.getTime() : Infinity; // sin próxima fecha va al final
+    return 0;
+  };
+  items.sort((a,b)=>{
+    const va = valor(a), vb = valor(b);
+    if(va < vb) return dir === 'asc' ? -1 : 1;
+    if(va > vb) return dir === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+  document.querySelectorAll('th.sortable').forEach(th=>{
+    const thKey = th.id.replace('th-','');
+    th.classList.toggle('sort-active', thKey === key);
+    const arrow = th.querySelector('.sort-arrow');
+    if(arrow) arrow.textContent = (thKey === key && dir === 'asc') ? '▲' : '▼';
+  });
+
+  body.innerHTML = items.map(({e, r})=>{
     const total = geTotal(e.ge);
+    const ultimoHTML = r.ultimoFecha
+      ? `${fmtDate(r.ultimoFecha)} <span class="pill ${r.ultimoTipo==='Preventivo' ? 'pill-teal' : 'pill-clay'}" style="margin-left:4px;">${r.ultimoTipo}</span>`
+      : `<span style="color:var(--muted);">Sin registro</span>`;
+    const proximoHTML = !r.incluido
+      ? `<span class="pill pill-gray">No aplica</span>`
+      : (r.proxima ? fmtDate(toISODateLocal(r.proxima)) : `<span style="color:var(--muted);">Por definir</span>`);
     return `
     <tr class="clickable" onclick="openDrawer('${e.id}')">
       <td>
@@ -1284,12 +2019,159 @@ function renderMantenimiento(){
       <td class="mono" style="font-weight:700; font-size:15px;">${total}</td>
       <td>${geClasificacion(total)==='I' ? '<span class="pill pill-green">Incluido (I)</span>' : '<span class="pill pill-gray">No incluido (N)</span>'}</td>
       <td>${geFrecPill(total)}</td>
+      <td class="mono" style="font-size:12.5px;">${ultimoHTML}</td>
+      <td class="mono" style="font-size:12.5px; font-weight:600;">${proximoHTML}</td>
       <td style="text-align:right;"><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation(); openGECalc('${e.id}')">Reclasificar</button></td>
     </tr>`;
   }).join('');
+  renderProgramacionMes();
 }
 
-/* ===================== DRAWER (ficha de equipo) ===================== */
+/* ---- Mantenimiento preventivo programado para el mes actual ---- */
+function mesesPorFrecuencia(freq){ return freq === 'Trimestral' ? 4 : (freq === 'Semestral' ? 6 : 12); }
+function toISODateLocal(d){
+  const y = d.getFullYear(), m = String(d.getMonth()+1).padStart(2,'0'), day = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+function datosPreventivo(e){
+  const total = geTotal(e.ge);
+  if(geClasificacion(total) !== 'I') return null;
+  const freq = geFrecuencia(total);
+  const meses = mesesPorFrecuencia(freq);
+  const preventivos = (e.historial || []).filter(h=>h.tipo==='Preventivo').sort((a,b)=> b.fecha.localeCompare(a.fecha));
+  const ultima = preventivos.length ? preventivos[0].fecha : null;
+  let proxima = null;
+  if(ultima){
+    proxima = new Date(ultima + 'T00:00:00');
+    proxima.setMonth(proxima.getMonth() + meses);
+  }
+  return {freq, meses, ultima, proxima};
+}
+function equiposPreventivoMesActual(){
+  const hoy = new Date();
+  const finMes = new Date(hoy.getFullYear(), hoy.getMonth()+1, 0, 23,59,59);
+  const list = [];
+  equipos.forEach(e=>{
+    const d = datosPreventivo(e);
+    if(!d) return;
+    if(d.proxima === null || d.proxima <= finMes){
+      const estado = d.proxima === null ? 'sin-historial' : (d.proxima < hoy ? 'vencido' : 'este-mes');
+      list.push({equipo:e, ...d, estado});
+    }
+  });
+  const rank = s => s==='sin-historial' ? 0 : (s==='vencido' ? 1 : 2);
+  list.sort((a,b)=>{
+    if(rank(a.estado) !== rank(b.estado)) return rank(a.estado)-rank(b.estado);
+    const da = a.proxima ? a.proxima.getTime() : -Infinity;
+    const db = b.proxima ? b.proxima.getTime() : -Infinity;
+    return da-db;
+  });
+  return list;
+}
+
+// Igual que equiposPreventivoMesActual, pero para cualquier mes relativo al actual
+// (offset 0 = mes en curso, incluye vencidos y sin historial; offset > 0 = un mes
+// futuro específico, solo equipos cuya próxima fecha cae exactamente en ese mes).
+const IM_MAX_MESES_ADELANTE = 11;
+let imScheduleOffset = 0;
+function equiposParaMesOffset(offset){
+  if(offset === 0) return equiposPreventivoMesActual();
+  const hoy = new Date();
+  const target = new Date(hoy.getFullYear(), hoy.getMonth()+offset, 1);
+  const ty = target.getFullYear(), tm = target.getMonth();
+  const list = [];
+  equipos.forEach(e=>{
+    const d = datosPreventivo(e);
+    if(!d || !d.proxima) return;
+    if(d.proxima.getFullYear()===ty && d.proxima.getMonth()===tm){
+      list.push({equipo:e, ...d, estado:'programado'});
+    }
+  });
+  list.sort((a,b)=> a.proxima.getTime() - b.proxima.getTime());
+  return list;
+}
+function cambiarMesProgramacion(delta){
+  const next = imScheduleOffset + delta;
+  if(next < 0 || next > IM_MAX_MESES_ADELANTE) return;
+  imScheduleOffset = next;
+  renderProgramacionMes();
+}
+
+function renderProgramacionMes(){
+  const tbody = document.getElementById('imScheduleBody');
+  if(!tbody) return;
+
+  // Los 3 indicadores de arriba siempre reflejan el mes real actual,
+  // sin importar qué mes se esté navegando en la tabla de abajo.
+  const kpiList = equiposPreventivoMesActual();
+  const vencidos = kpiList.filter(i=>i.estado==='vencido').length;
+  const sinHistorial = kpiList.filter(i=>i.estado==='sin-historial').length;
+  const esteMes = kpiList.filter(i=>i.estado==='este-mes').length;
+  const kv = document.getElementById('kpiVencidos'); if(kv) kv.textContent = vencidos;
+  const ks = document.getElementById('kpiSinHistorial'); if(ks) ks.textContent = sinHistorial;
+  const ke = document.getElementById('kpiEsteMes'); if(ke) ke.textContent = esteMes;
+
+  // Mes que se está mostrando en la tabla navegable
+  const hoy = new Date();
+  const target = new Date(hoy.getFullYear(), hoy.getMonth()+imScheduleOffset, 1);
+  let mesLabel = target.toLocaleDateString('es-MX', {month:'long', year:'numeric'});
+  mesLabel = mesLabel.charAt(0).toUpperCase() + mesLabel.slice(1);
+  const labelEl = document.getElementById('imScheduleMonthLabel');
+  if(labelEl) labelEl.textContent = mesLabel;
+
+  const prevBtn = document.getElementById('imMesPrev');
+  const nextBtn = document.getElementById('imMesNext');
+  const hoyBtn = document.getElementById('imMesHoy');
+  if(prevBtn) prevBtn.disabled = (imScheduleOffset <= 0);
+  if(nextBtn) nextBtn.disabled = (imScheduleOffset >= IM_MAX_MESES_ADELANTE);
+  if(hoyBtn) hoyBtn.style.display = (imScheduleOffset === 0) ? 'none' : '';
+
+  const list = equiposParaMesOffset(imScheduleOffset);
+  const countEl = document.getElementById('imScheduleCount');
+  if(countEl) countEl.textContent = list.length;
+
+  if(list.length === 0){
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+      <div class="t">Sin mantenimientos preventivos ${imScheduleOffset===0 ? 'pendientes este mes' : 'programados para ' + mesLabel.toLowerCase()}</div>${imScheduleOffset===0 ? 'Todos los equipos incluidos en el programa están al día.' : 'Ningún equipo tiene su próxima fecha calculada dentro de ese mes.'}
+    </div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = list.map(item=>{
+    const e = item.equipo;
+    const estadoPill = item.estado==='vencido' ? '<span class="pill pill-red">Vencido</span>'
+                      : item.estado==='sin-historial' ? '<span class="pill pill-amber">Sin historial — programar</span>'
+                      : item.estado==='este-mes' ? '<span class="pill pill-teal">Programado este mes</span>'
+                      : '<span class="pill pill-teal">Programado</span>';
+    const puedeGestionar = (currentRole === 'admin' || currentRole === 'coordinador');
+    const yaEnServicio = e.estado === 'En mantenimiento';
+    const ordenActiva = yaEnServicio ? ordenActivaDeEquipo(e.id) : null;
+    return `
+    <tr class="clickable" onclick="openDrawer('${e.id}')">
+      <td><div class="cell-primary">${e.nombre}</div><div class="cell-sub">${assetTag(e.id)} · ${e.area}</div></td>
+      <td><span class="pill pill-gray">${item.freq}</span></td>
+      <td class="mono" style="font-size:12.5px;">${item.ultima ? fmtDate(item.ultima) : '—'}</td>
+      <td class="mono" style="font-size:12.5px; font-weight:600;">${item.proxima ? fmtDate(toISODateLocal(item.proxima)) : 'Por definir'}</td>
+      <td>${estadoPill}</td>
+      <td>${statusPill(e.estado)}</td>
+      <td style="text-align:right;">
+        ${puedeGestionar ? `
+        <div style="display:flex; gap:6px; justify-content:flex-end; flex-wrap:wrap; align-items:center;">
+          <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); registrarPreventivoRealizado('${e.id}')">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M20 6L9 17l-5-5"/></svg>
+            Registrar realizado
+          </button>
+          ${yaEnServicio
+            ? (ordenActiva
+                ? `<span class="pill pill-amber mono" style="cursor:pointer;" title="Ver orden ${ordenActiva.folio}" onclick="event.stopPropagation(); openHospOrderModal('${ordenActiva.folio}')">Ya en servicio · ${ordenActiva.folio}</span>`
+                : `<span class="pill pill-amber" title="Ya está en mantenimiento">Ya en servicio</span>`)
+            : `<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation(); enviarAServicio('${e.id}')">Enviar a servicio</button>`}
+        </div>` : ''}
+      </td>
+    </tr>`;
+  }).join('');
+}
 let currentDrawerId = null;
 function openDrawer(id){
   currentDrawerId = id;
@@ -1300,15 +2182,20 @@ function openDrawer(id){
 
   document.getElementById('drawerGeneral').innerHTML = `
     <div class="kv-item"><div class="k">Nombre</div><div class="v">${e.nombre}</div></div>
+    <div class="kv-item"><div class="k">Folio de inventario</div><div class="v mono">${e.id}</div></div>
+    <div class="kv-item"><div class="k">Categoría / función clínica</div><div class="v">${e.categoria} — ${funcionClinicaLabel(e)}</div></div>
     <div class="kv-item"><div class="k">Marca / modelo</div><div class="v">${e.marca}</div></div>
     <div class="kv-item"><div class="k">Número de serie</div><div class="v mono">${e.serie}</div></div>
-    <div class="kv-item"><div class="k">Folio de inventario</div><div class="v mono">${e.id}</div></div>
-    <div class="kv-item"><div class="k">Ubicación / servicio</div><div class="v">${e.area}</div></div>
-    <div class="kv-item"><div class="k">Categoría funcional</div><div class="v">${e.categoria}</div></div>
+    <div class="kv-item"><div class="k">Ubicación / servicio clínico</div><div class="v">${e.area}</div></div>
     <div class="kv-item"><div class="k">Estado operativo</div><div class="v">${statusPill(e.estado)}</div></div>
+    <div class="kv-item"><div class="k">Nivel de riesgo clínico</div><div class="v">${e.tipoRiesgo}</div></div>
     <div class="kv-item"><div class="k">Fecha de adquisición</div><div class="v">${fmtDate(e.adquisicion)}</div></div>
-    <div class="kv-item"><div class="k">Proveedor</div><div class="v">${e.proveedor}</div></div>
-    <div class="kv-item"><div class="k">Nivel de riesgo</div><div class="v">${e.tipoRiesgo}</div></div>
+    <div class="kv-item"><div class="k">Instalación y puesta en marcha</div><div class="v">${e.instalacion ? fmtDate(e.instalacion) : '—'}</div></div>
+    <div class="kv-item"><div class="k">Alta en el software</div><div class="v">${e.fechaAlta ? fmtDate(e.fechaAlta) : '—'}</div></div>
+    <div class="kv-item"><div class="k">Vida útil estimada</div><div class="v">${vidaUtilLabel(e)}</div></div>
+    <div class="kv-item"><div class="k">Frecuencia de mant. preventivo</div><div class="v">${geFrecuencia(geTotal(e.ge))}</div></div>
+    <div class="kv-item"><div class="k">Proveedor del equipo</div><div class="v">${e.proveedor}</div></div>
+    <div class="kv-item" style="grid-column:1 / -1;"><div class="k">Proveedor de servicio técnico</div><div class="v">${e.proveedorServicio || '—'}</div></div>
   `;
 
   const docs = [...e.manuales.map(m=>({t:m, i:'doc'})), ...e.accesorios.map(a=>({t:a, i:'acc'}))];
@@ -1327,6 +2214,7 @@ function openDrawer(id){
   document.getElementById('drawerGarantia').textContent = e.garantia;
 
   const total = geTotal(e.ge);
+  const mantHistorial = (e.historial || []).filter(h => h.tipo === 'Preventivo' || h.tipo === 'Correctivo');
   document.getElementById('drawerGE').innerHTML = `
     <div class="card card-pad" style="background:var(--panel-2); margin-top:10px;">
       ${geBarHTML(e.ge)}
@@ -1340,18 +2228,60 @@ function openDrawer(id){
         ${geClasificacion(total)==='I' ? '<span class="pill pill-green">Incluido en programa</span>' : '<span class="pill pill-gray">No incluido</span>'}
         ${geFrecPill(total)}
       </div>
+    </div>
+    <div class="section-title" style="font-size:13px; margin:16px 0 8px;">Historial de mantenimiento y reparaciones</div>
+    <div class="section-sub" style="margin-bottom:10px;">Solo eventos de mantenimiento preventivo y correctivo — para el historial completo del equipo, ve la pestaña "Historial".</div>
+    <div class="timeline">
+      ${mantHistorial.length ? mantHistorial.map(h=>`
+        <div class="timeline-item">
+          <div class="t-date">${fmtDate(h.fecha)} <span class="pill ${h.tipo==='Preventivo' ? 'pill-teal' : 'pill-clay'}" style="margin-left:4px;">${h.tipo}</span></div>
+          <div class="t-desc" style="margin-top:3px;">${h.detalle}</div>
+        </div>`).join('') : `<div class="scope-note">Aún no hay mantenimientos ni reparaciones registrados.</div>`}
     </div>`;
 
-  document.getElementById('drawerHistorial').innerHTML = e.historial.length ? e.historial.map(h=>`
+  const historialCompleto = [...(e.historial || [])];
+  if(e.fechaAlta){
+    historialCompleto.push({fecha: e.fechaAlta, tipo:'Alta', detalle:'Equipo dado de alta en el software Cléra.'});
+  }
+  const tipoPill = (tipo) => {
+    if(tipo==='Preventivo') return '<span class="pill pill-teal">Preventivo</span>';
+    if(tipo==='Correctivo') return '<span class="pill pill-clay">Correctivo</span>';
+    if(tipo==='Alta') return '<span class="pill pill-gray">Alta</span>';
+    return `<span class="pill pill-gray">${tipo}</span>`;
+  };
+  document.getElementById('drawerHistorial').innerHTML = historialCompleto.length ? historialCompleto.map(h=>`
     <div class="timeline-item">
-      <div class="t-date">${fmtDate(h.fecha)}</div>
-      <div class="t-title">${h.tipo}</div>
-      <div class="t-desc">${h.detalle}</div>
+      <div class="t-date">${fmtDate(h.fecha)} ${tipoPill(h.tipo)}</div>
+      <div class="t-desc" style="margin-top:3px;">${h.detalle}</div>
     </div>`).join('') : `<div class="scope-note">Aún no hay eventos registrados en el historial de este equipo.</div>`;
 
+  renderDrawerActions(e);
   switchEquipoTab('general');
   document.getElementById('drawerOverlay').classList.add('active');
   document.getElementById('equipoDrawer').classList.add('active');
+}
+function renderDrawerActions(e){
+  const box = document.getElementById('drawerActions');
+  if(currentRole === 'proveedor' || currentRole === 'tecnico_proveedor' || currentRole === 'tecnico'){ box.innerHTML = ''; return; } // solo lectura
+  let html = `<button class="btn btn-ghost btn-sm" onclick="openEditEquipoModal()">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
+      Editar</button>`;
+  if(e.estado !== 'Fuera de servicio'){
+    html += `<button class="btn btn-ghost btn-sm" onclick="deshabilitarEquipo('${e.id}')">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M5 19L19 5"/></svg>
+      Deshabilitar</button>`;
+  }
+  if(e.estado !== 'En mantenimiento'){
+    html += `<button class="btn btn-ghost btn-sm" onclick="enviarAServicio('${e.id}')">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a4 4 0 10-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 005.4-5.4l-2.6 2.6-2-2 2.6-2.6z"/></svg>
+      Enviar a servicio</button>`;
+  }
+  if(currentRole === 'admin'){
+    html += `<button class="btn btn-ghost btn-sm" style="color:var(--red-700); border-color:#e6c2bc;" onclick="eliminarEquipo('${e.id}')">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0l-1 14a2 2 0 01-2 2H7a2 2 0 01-2-2L4 6"/></svg>
+      Eliminar</button>`;
+  }
+  box.innerHTML = html;
 }
 function closeDrawer(){
   document.getElementById('drawerOverlay').classList.remove('active');
@@ -1368,6 +2298,8 @@ function switchRevTab(tab){
   document.querySelectorAll('[data-rtab]').forEach(b=>b.classList.toggle('active', b.dataset.rtab===tab));
   document.getElementById('revTab-checklist').style.display = tab==='checklist' ? '' : 'none';
   document.getElementById('revTab-solicitudes').style.display = tab==='solicitudes' ? '' : 'none';
+  document.getElementById('revTab-aprobaciones').style.display = tab==='aprobaciones' ? '' : 'none';
+  document.getElementById('revTab-misSolicitudes').style.display = tab==='misSolicitudes' ? '' : 'none';
 }
 
 function renderChecklist(){
@@ -1375,6 +2307,7 @@ function renderChecklist(){
   grid.innerHTML = equipos.map(e=>{
     const c = checklists[e.id];
     const allChecked = c.items.every(i=>i.checked);
+    const tieneHallazgos = c.incidencias && c.incidencias.length > 0;
     return `
     <div class="check-card ${c.guardadoHoy ? 'done' : ''}">
       <div class="check-top">
@@ -1383,7 +2316,9 @@ function renderChecklist(){
           <div class="cell-sub">${assetTag(e.id)} · ${e.area}</div>
         </div>
         ${c.guardadoHoy
-          ? `<span class="pill pill-green">Completada · ${c.hora}</span>`
+          ? (tieneHallazgos
+              ? `<span class="pill pill-amber">Con hallazgos · ${c.hora}</span>`
+              : `<span class="pill pill-green">Completada · ${c.hora}</span>`)
           : `<span class="pill pill-amber">Pendiente</span>`}
       </div>
       <div class="check-items">
@@ -1395,14 +2330,28 @@ function renderChecklist(){
           </div>`).join('')}
       </div>
       <div class="check-meta">
-        <input class="input" placeholder="Responsable" value="${c.responsable}" ${c.guardadoHoy?'disabled':''}
-          oninput="checklists['${e.id}'].responsable=this.value">
-        <input class="input" placeholder="Notas (opcional)" value="${c.nota}" ${c.guardadoHoy?'disabled':''}
-          oninput="checklists['${e.id}'].nota=this.value">
+        <div class="field" style="flex:1;">
+          <label style="font-size:11px; margin-bottom:3px;">Responsable</label>
+          <div class="input" style="display:flex; align-items:center; gap:7px; background:var(--panel-2); color:var(--ink-soft); font-weight:600;">
+            <span class="user-avatar" style="width:20px; height:20px; font-size:9.5px; flex:0 0 20px;">${(c.guardadoHoy ? (USER_ROLES[c.responsable]||{}).initials : (currentUser && USER_ROLES[currentUser].initials)) || '—'}</span>
+            ${c.guardadoHoy ? (c.responsable || 'Sin registrar') : (currentUser || 'Sin sesión')}
+          </div>
+        </div>
+        <div class="field" style="flex:1;">
+          <label style="font-size:11px; margin-bottom:3px;">Notas (opcional)</label>
+          <input class="input" placeholder="Notas (opcional)" value="${c.nota}" ${c.guardadoHoy?'disabled':''}
+            oninput="checklists['${e.id}'].nota=this.value">
+        </div>
       </div>
+      ${tieneHallazgos ? `
+        <div class="scope-note" style="border-style:solid; border-color:var(--amber-600); background:var(--amber-100); color:#6b4f04;">
+          <strong>Hallazgos reportados:</strong>
+          ${c.incidencias.map(h=>`<div style="margin-top:4px;">• ${h.label}: ${h.motivo}</div>`).join('')}
+          <div style="margin-top:4px;">Se generó una orden de mantenimiento automáticamente.</div>
+        </div>` : ''}
       ${c.guardadoHoy
         ? `<button class="btn btn-ghost btn-sm btn-block" onclick="resetChecklist('${e.id}')">Reabrir revisión</button>`
-        : `<button class="btn btn-primary btn-sm btn-block" ${allChecked?'':'disabled style="opacity:.45;"'} onclick="saveChecklist('${e.id}')">
+        : `<button class="btn btn-primary btn-sm btn-block" onclick="saveChecklist('${e.id}')">
              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg>
              Guardar revisión
            </button>`}
@@ -1416,8 +2365,14 @@ function toggleCheckItem(id, idx){
 }
 function saveChecklist(id){
   const c = checklists[id];
-  if(!c.items.every(i=>i.checked)){ showToast('Marca todos los puntos antes de guardar'); return; }
+  const pendientes = c.items.filter(i=>!i.checked);
+  if(pendientes.length > 0){
+    openChecklistIssueModal(id);
+    return;
+  }
   c.guardadoHoy = true;
+  c.incidencias = [];
+  c.responsable = currentUser;
   c.hora = new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
   renderChecklist();
   renderDashboard();
@@ -1425,8 +2380,114 @@ function saveChecklist(id){
 }
 function resetChecklist(id){
   checklists[id].guardadoHoy = false;
+  checklists[id].incidencias = [];
   renderChecklist();
   renderDashboard();
+}
+
+/* ---- Revisión con puntos incompletos: motivo + envío automático a mantenimiento ---- */
+let checklistIssueEquipoId = null;
+function openChecklistIssueModal(equipoId){
+  const e = equipoById(equipoId);
+  const c = checklists[equipoId];
+  const pendientes = c.items.filter(i=>!i.checked);
+  checklistIssueEquipoId = equipoId;
+  document.getElementById('issueModalTitle').textContent = 'Revisión con puntos pendientes — ' + e.nombre;
+  document.getElementById('issueModalBody').innerHTML = pendientes.map((it,idx)=>`
+    <div class="field">
+      <label>${it.label} <span class="hint">— no se marcó como revisado</span></label>
+      <textarea class="input" id="issueMotivo-${idx}" data-label="${it.label.replace(/"/g,'&quot;')}" placeholder="¿Por qué no se completó este punto? Ej. no se pudo verificar por falta de accesorio, se detectó falla, equipo fuera de servicio, etc."></textarea>
+    </div>`).join('') + `
+    <div class="field">
+      <label>Urgencia de la orden de mantenimiento que se generará</label>
+      <div class="urgency-picker" id="issueUrgencia">
+        <div class="urgency-opt sel-emerg" data-val="Urgente por emergencia" onclick="selectIssueUrgencia(this)">Urgente por<br>emergencia</div>
+        <div class="urgency-opt sel-urg" data-val="Urgente" onclick="selectIssueUrgencia(this)">Urgente</div>
+        <div class="urgency-opt sel-reg selected" data-val="Regular" onclick="selectIssueUrgencia(this)">Regular</div>
+      </div>
+    </div>`;
+  document.getElementById('issueModalOverlay').classList.add('active');
+}
+function selectIssueUrgencia(el){
+  document.querySelectorAll('#issueUrgencia .urgency-opt').forEach(o=>o.classList.remove('selected'));
+  el.classList.add('selected');
+}
+function closeChecklistIssueModal(){
+  document.getElementById('issueModalOverlay').classList.remove('active');
+  checklistIssueEquipoId = null;
+}
+function confirmChecklistIssue(){
+  const id = checklistIssueEquipoId;
+  if(!id) return;
+  const c = checklists[id];
+  const pendientes = c.items.filter(i=>!i.checked);
+  const textareas = document.querySelectorAll('#issueModalBody textarea[id^="issueMotivo-"]');
+  const incidencias = [];
+  let faltaMotivo = false;
+  textareas.forEach(ta=>{
+    const motivo = ta.value.trim();
+    if(!motivo) faltaMotivo = true;
+    incidencias.push({label: ta.dataset.label, motivo});
+  });
+  if(faltaMotivo){ showToast('Indica el motivo de cada punto pendiente'); return; }
+
+  const urgencia = document.querySelector('#issueUrgencia .selected').dataset.val;
+  const hoy = new Date().toISOString().slice(0,10);
+
+  // La revisión en sí siempre se guarda de inmediato (es solo documentar lo visto).
+  c.guardadoHoy = true;
+  c.incidencias = incidencias;
+  c.responsable = currentUser;
+  c.hora = new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+
+  const e = equipoById(id);
+  const motivoTexto = incidencias.map(h=>h.label+': '+h.motivo).join(' · ');
+
+  if(currentRole === 'tecnico'){
+    // La orden NO se genera todavía: queda pendiente de aprobación del coordinador.
+    const pid = 'AP-' + String(solicitudPendienteSeq++).padStart(4,'0');
+    solicitudesPendientes.push({
+      id: pid, tipo:'checklist', equipoId:id, motivo: motivoTexto, urgencia,
+      solicitadoPor: currentUser, fecha: hoy,
+      hora: new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}),
+      estado:'Pendiente', motivoRechazo:'', ordenFolio:''
+    });
+    closeChecklistIssueModal();
+    renderChecklist();
+    renderAprobaciones();
+    renderMisSolicitudes();
+    updateNavBadges();
+    showToast('Revisión guardada — pendiente de aprobación del coordinador para generar la orden');
+    return;
+  }
+
+  // admin / coordinador: la orden se genera de inmediato, como antes.
+  const catMap = {"Urgente por emergencia":"Urgente emergencia","Urgente":"Urgente","Regular":"Regular"};
+  const nuevoFolio = 'MC-' + String(correctivoFolioSeq++).padStart(4,'0');
+  correctivo.unshift({
+    folio: nuevoFolio,
+    equipoId:id,
+    origen:'Revisión diaria — puntos pendientes',
+    detalle: motivoTexto,
+    categoria: catMap[urgencia] || 'Regular',
+    estado:'Abierta', tecnico:'Sin asignar', fecha:hoy,
+    notasProveedor:'', resueltoPor:'', fechaResuelto:'', validadoPor:'', fechaCierre:'', comentarioValidacion:'', bitacora:[]
+  });
+  agregarBitacora('HOSP-1', nuevoFolio, currentUser, 'Orden creada automáticamente desde revisión diaria con puntos pendientes.');
+  e.historial.unshift({fecha:hoy, tipo:'Correctivo', detalle:'Revisión diaria con puntos pendientes, enviada automáticamente a Órdenes de Mantenimiento (orden '+nuevoFolio+').'});
+  if(e.estado === 'Operativo'){
+    e.estado = 'En mantenimiento';
+    e.historial.unshift({fecha:hoy, tipo:'Estado', detalle:'Equipo puesto en mantenimiento por hallazgos en revisión diaria.'});
+  }
+
+  closeChecklistIssueModal();
+  renderChecklist();
+  renderCorrectivo();
+  renderInventario();
+  renderMantenimiento();
+  renderDashboard();
+  updateNavBadges();
+  showToast('Revisión guardada — orden enviada a Órdenes de Mantenimiento');
 }
 
 /* ---- Solicitar revisión de equipo ---- */
@@ -1448,7 +2509,7 @@ function openSolicitudModal(){
   populateSolEquipoSelect();
   document.getElementById('solEquipo').value = '';
   document.getElementById('solUbicacion').value = '';
-  document.getElementById('solSolicitante').value = '';
+  document.getElementById('solSolicitante').value = currentUser || '';
   document.getElementById('solTipo').value = 'Eléctrico';
   document.getElementById('solDescripcion').value = '';
   document.getElementById('solNotas').value = '';
@@ -1461,14 +2522,14 @@ function closeSolicitudModal(){
 }
 function submitSolicitud(){
   const equipoId = document.getElementById('solEquipo').value;
-  const solicitante = document.getElementById('solSolicitante').value.trim();
+  const solicitante = currentUser;
   const descripcion = document.getElementById('solDescripcion').value.trim();
   if(!equipoId){ showToast('Selecciona un equipo'); return; }
-  if(!solicitante){ showToast('Indica quién solicita la revisión'); return; }
   if(!descripcion){ showToast('Describe el desperfecto observado'); return; }
 
   const urgencia = document.querySelector('#solUrgencia .selected').dataset.val;
   const folio = 'SR-' + String(solicitudFolioSeq++).padStart(4,'0');
+  const hoy = new Date().toISOString().slice(0,10);
   const nueva = {
     folio, equipoId,
     ubicacion: document.getElementById('solUbicacion').value,
@@ -1477,24 +2538,40 @@ function submitSolicitud(){
     descripcion,
     notas: document.getElementById('solNotas').value.trim(),
     urgencia,
-    fecha: new Date().toISOString().slice(0,10),
+    fecha: hoy,
     hora: new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}),
     estado: 'Abierta'
   };
   solicitudes.unshift(nueva);
 
-  // Se refleja también como orden de mantenimiento correctivo
+  // Se refleja también como orden en Órdenes de Mantenimiento, enlazada a esta
+  // solicitud (solicitudFolio) para poder marcarla como resuelta cuando el
+  // hospital valide y cierre esa orden.
   const catMap = {"Urgente por emergencia":"Urgente emergencia","Urgente":"Urgente","Regular":"Regular"};
+  const folioCorrectivo = 'MC-' + String(correctivoFolioSeq++).padStart(4,'0');
   correctivo.unshift({
-    folio: 'MC-' + String(correctivoFolioSeq++).padStart(4,'0'),
-    equipoId, origen:'Solicitud de revisión ('+folio+')',
+    folio: folioCorrectivo,
+    equipoId, origen:'Solicitud de revisión ('+folio+')', solicitudFolio: folio,
     categoria: catMap[urgencia] || 'Regular',
-    estado:'Abierta', tecnico:'Sin asignar', fecha: nueva.fecha
+    estado:'Abierta', tecnico:'Sin asignar', fecha: hoy,
+    notasProveedor:'', resueltoPor:'', fechaResuelto:'', validadoPor:'', fechaCierre:'', comentarioValidacion:'', bitacora:[]
   });
+  agregarBitacora('HOSP-1', folioCorrectivo, solicitante, 'Orden creada desde solicitud de revisión '+folio+' ('+urgencia+').');
+
+  // El equipo pasa a "En mantenimiento" mientras se atiende la solicitud
+  // (solo si estaba operativo; no se pisa un "Fuera de servicio" ya existente).
+  const e = equipoById(equipoId);
+  if(e && e.estado === 'Operativo'){
+    e.estado = 'En mantenimiento';
+    e.historial.unshift({fecha:hoy, tipo:'Estado', detalle:'Equipo puesto en mantenimiento por solicitud de revisión '+folio+'.'});
+  }
 
   closeSolicitudModal();
   renderSolicitudes();
   renderCorrectivo();
+  renderInventario();
+  renderMantenimiento();
+  renderChecklist();
   renderDashboard();
   updateNavBadges();
   showToast('Solicitud '+folio+' enviada');
@@ -1514,8 +2591,10 @@ function renderSolicitudes(){
   }
   grid.innerHTML = solicitudes.map(s=>{
     const e = equipoById(s.equipoId);
+    const resuelta = s.estado === 'Resuelta';
+    const ordenRelacionada = correctivo.find(c => c.solicitudFolio === s.folio);
     return `
-    <div class="req-card">
+    <div class="req-card" style="${resuelta ? 'background:var(--green-100); border-color:#bcdcc7;' : ''}">
       <div class="req-top">
         <div>
           <div class="cell-primary">${e ? e.nombre : 'Equipo eliminado'}</div>
@@ -1523,38 +2602,265 @@ function renderSolicitudes(){
         </div>
         ${urgenciaPill(s.urgencia)}
       </div>
-      <div><span class="pill pill-teal">${s.tipo}</span> <span class="pill ${s.estado==='Abierta'?'pill-amber':'pill-green'}">${s.estado}</span></div>
+      <div><span class="pill pill-teal">${s.tipo}</span> <span class="pill ${resuelta ? 'pill-green' : 'pill-amber'}">${resuelta ? '✓ Resuelta' : s.estado}</span></div>
       <div class="req-desc"><strong>Desperfecto:</strong> ${s.descripcion}</div>
       ${s.notas ? `<div class="req-desc"><strong>Notas:</strong> ${s.notas}</div>` : ''}
+      ${resuelta && ordenRelacionada ? `<div class="scope-note" style="border-color:var(--green-600); background:transparent; color:#215335;">Validada y cerrada por ${ordenRelacionada.validadoPor || '—'} el ${fmtDate(ordenRelacionada.fechaCierre)} · orden ${ordenRelacionada.folio}</div>` : ''}
       <div class="req-foot">
-        <span>${s.folio}</span>
+        <span>${s.folio}${ordenRelacionada ? ' → ' + ordenRelacionada.folio : ''}</span>
         <span>${s.solicitante} · ${fmtDate(s.fecha)} ${s.hora}</span>
       </div>
     </div>`;
   }).join('');
 }
 
+/* ---- Aprobaciones pendientes (solicitudes del técnico que requieren validación) ---- */
+function renderAprobaciones(){
+  const grid = document.getElementById('aprobacionesGrid');
+  if(!grid) return;
+  const pendientes = solicitudesPendientes.filter(p=>p.estado==='Pendiente');
+  const resueltas = solicitudesPendientes.filter(p=>p.estado!=='Pendiente').slice(0,8);
+  const countEl = document.getElementById('aprobTabCount');
+  if(countEl) countEl.textContent = pendientes.length ? `(${pendientes.length})` : '';
+
+  const lista = [...pendientes, ...resueltas];
+  if(lista.length === 0){
+    grid.innerHTML = `<div class="card"><div class="empty-state">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+      <div class="t">Sin solicitudes por aprobar</div>Cuando el técnico marque puntos pendientes en su rutina o solicite un envío a servicio, aparecerá aquí.
+    </div></div>`;
+    return;
+  }
+
+  grid.innerHTML = lista.map(p=>{
+    const e = equipoById(p.equipoId);
+    const bg = p.estado==='Rechazada' ? 'background:var(--red-100); border-color:#e6c2bc;'
+             : p.estado==='Aprobada' ? 'background:var(--green-100); border-color:#bcdcc7;' : '';
+    return `
+    <div class="req-card" style="${bg}">
+      <div class="req-top">
+        <div>
+          <div class="cell-primary">${e ? e.nombre : 'Equipo eliminado'}</div>
+          <div class="cell-sub">${assetTag(p.equipoId)} · ${p.tipo==='checklist' ? 'Hallazgo en revisión diaria' : 'Solicitud de envío a servicio'}</div>
+        </div>
+        ${urgenciaPill(p.urgencia)}
+      </div>
+      <div class="req-desc"><strong>Motivo:</strong> ${p.motivo}</div>
+      ${p.estado==='Rechazada' ? `<div class="req-desc" style="color:var(--red-700);"><strong>Rechazada:</strong> ${p.motivoRechazo}</div>` : ''}
+      ${p.estado==='Aprobada' ? `<div class="req-desc" style="color:#215335;"><strong>Aprobada</strong> — se generó la orden <span class="mono">${p.ordenFolio}</span></div>` : ''}
+      <div class="req-foot">
+        <span>${p.id}</span>
+        <span>${p.solicitadoPor} · ${fmtDate(p.fecha)} ${p.hora}</span>
+      </div>
+      ${p.estado==='Pendiente' ? `
+      <div style="display:flex; gap:8px; margin-top:2px;">
+        <button class="btn btn-primary btn-sm" style="flex:1;" onclick="aprobarSolicitudPendiente('${p.id}')">Aprobar</button>
+        <button class="btn btn-ghost btn-sm" style="flex:1;" onclick="rechazarSolicitudPendiente('${p.id}')">Rechazar</button>
+      </div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+// Vista del técnico: el estado de sus propias solicitudes (sin botones de acción,
+// solo para que sepa si ya se aprobaron, con qué orden, o si se rechazaron y por qué).
+function renderMisSolicitudes(){
+  const grid = document.getElementById('misSolicitudesGrid');
+  if(!grid) return;
+  const mias = solicitudesPendientes.filter(p => p.solicitadoPor === currentUser)
+    .slice().sort((a,b)=> (b.fecha+b.hora).localeCompare(a.fecha+a.hora));
+  const pendientesCount = mias.filter(p=>p.estado==='Pendiente').length;
+  const countEl = document.getElementById('misSolTabCount');
+  if(countEl) countEl.textContent = pendientesCount ? `(${pendientesCount})` : '';
+
+  if(mias.length === 0){
+    grid.innerHTML = `<div class="card"><div class="empty-state">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 9v6m-3-3h6"/></svg>
+      <div class="t">Aún no has enviado ninguna solicitud</div>Cuando marques puntos pendientes en tu rutina, o uses "Solicitar envío a servicio", el estado aparecerá aquí.
+    </div></div>`;
+    return;
+  }
+
+  grid.innerHTML = mias.map(p=>{
+    const e = equipoById(p.equipoId);
+    const bg = p.estado==='Rechazada' ? 'background:var(--red-100); border-color:#e6c2bc;'
+             : p.estado==='Aprobada' ? 'background:var(--green-100); border-color:#bcdcc7;' : '';
+    const estadoPill = p.estado==='Aprobada' ? '<span class="pill pill-green">✓ Aprobada</span>'
+                      : p.estado==='Rechazada' ? '<span class="pill pill-red">✕ Rechazada</span>'
+                      : '<span class="pill pill-amber">Pendiente de aprobación</span>';
+    return `
+    <div class="req-card" style="${bg}">
+      <div class="req-top">
+        <div>
+          <div class="cell-primary">${e ? e.nombre : 'Equipo eliminado'}</div>
+          <div class="cell-sub">${assetTag(p.equipoId)} · ${p.tipo==='checklist' ? 'Hallazgo en revisión diaria' : 'Solicitud de envío a servicio'}</div>
+        </div>
+        ${urgenciaPill(p.urgencia)}
+      </div>
+      <div>${estadoPill}</div>
+      <div class="req-desc"><strong>Motivo:</strong> ${p.motivo}</div>
+      ${p.estado==='Rechazada' ? `<div class="req-desc" style="color:var(--red-700);"><strong>Motivo del rechazo:</strong> ${p.motivoRechazo}</div>` : ''}
+      ${p.estado==='Aprobada' ? `<div class="req-desc" style="color:#215335;"><strong>Aprobada</strong> — se generó la orden <span class="mono">${p.ordenFolio}</span>, visible en Órdenes de Mantenimiento.</div>` : ''}
+      <div class="req-foot">
+        <span>${p.id}</span>
+        <span>${fmtDate(p.fecha)} ${p.hora}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// Crea la orden real en Órdenes de Mantenimiento a partir de una solicitud aprobada.
+function crearOrdenDesdeAprobacion(pend){
+  const e = equipoById(pend.equipoId);
+  const catMap = {"Urgente por emergencia":"Urgente emergencia","Urgente":"Urgente","Regular":"Regular"};
+  const hoy = new Date().toISOString().slice(0,10);
+  const nuevoFolio = 'MC-' + String(correctivoFolioSeq++).padStart(4,'0');
+  const origenTxt = pend.tipo === 'checklist'
+    ? 'Revisión diaria — puntos pendientes (aprobado por ' + currentUser + ')'
+    : 'Enviado a servicio — solicitado por ' + pend.solicitadoPor + ', aprobado por ' + currentUser;
+
+  // La aprobación también se registra como una solicitud de revisión más, visible
+  // para el Coordinador/Director en "Solicitudes de revisión" — igual que las que
+  // ellos mismos generan con el botón "Solicitar revisión de equipo".
+  const srFolio = 'SR-' + String(solicitudFolioSeq++).padStart(4,'0');
+  solicitudes.unshift({
+    folio: srFolio, equipoId: pend.equipoId,
+    ubicacion: e ? e.area : '',
+    solicitante: pend.solicitadoPor,
+    tipo: pend.tipo === 'checklist' ? 'Hallazgo en revisión diaria' : 'Envío a servicio',
+    descripcion: pend.motivo,
+    notas: 'Solicitud del técnico, aprobada por ' + currentUserLabel() + '.',
+    urgencia: pend.urgencia,
+    fecha: hoy,
+    hora: new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}),
+    estado: 'Abierta'
+  });
+
+  correctivo.unshift({
+    folio: nuevoFolio, equipoId: pend.equipoId, origen: origenTxt, detalle: pend.motivo, solicitudFolio: srFolio,
+    categoria: catMap[pend.urgencia] || 'Regular',
+    estado:'Abierta', tecnico:'Sin asignar', fecha: hoy,
+    notasProveedor:'', resueltoPor:'', fechaResuelto:'', validadoPor:'', fechaCierre:'', comentarioValidacion:'', bitacora:[]
+  });
+  agregarBitacora('HOSP-1', nuevoFolio, currentUser,
+    'Orden creada tras aprobar la solicitud ' + pend.id + ' de ' + pend.solicitadoPor + ' (solicitud de revisión ' + srFolio + ').');
+
+  if(e){
+    e.historial.unshift({
+      fecha: hoy, tipo:'Correctivo',
+      detalle: (pend.tipo === 'checklist'
+        ? 'Revisión diaria con puntos pendientes, aprobada por ' + currentUserLabel() + ' — orden ' + nuevoFolio + '.'
+        : 'Solicitud de envío a servicio aprobada por ' + currentUserLabel() + ' — orden ' + nuevoFolio + '.')
+    });
+    if(e.estado === 'Operativo'){
+      e.estado = 'En mantenimiento';
+      e.historial.unshift({fecha: hoy, tipo:'Estado', detalle:'Equipo puesto en mantenimiento — solicitud ' + pend.id + ' aprobada por ' + currentUserLabel() + '.'});
+    }
+  }
+  return nuevoFolio;
+}
+function aprobarSolicitudPendiente(id){
+  const pend = solicitudesPendientes.find(p=>p.id===id);
+  if(!pend) return;
+  if(!confirm('¿Aprobar esta solicitud y generar la orden de mantenimiento?')) return;
+  const folio = crearOrdenDesdeAprobacion(pend);
+  pend.estado = 'Aprobada';
+  pend.ordenFolio = folio;
+  renderAprobaciones();
+  renderMisSolicitudes();
+  renderSolicitudes();
+  renderCorrectivo();
+  renderInventario();
+  renderMantenimiento();
+  renderChecklist();
+  renderDashboard();
+  updateNavBadges();
+  showToast('Solicitud aprobada — orden ' + folio + ' generada', 'success');
+}
+function rechazarSolicitudPendiente(id){
+  const pend = solicitudesPendientes.find(p=>p.id===id);
+  if(!pend) return;
+  const motivo = prompt('Motivo del rechazo (el técnico lo podrá ver):');
+  if(motivo === null) return;
+  pend.estado = 'Rechazada';
+  pend.motivoRechazo = motivo.trim() || 'Sin motivo especificado.';
+  renderAprobaciones();
+  renderMisSolicitudes();
+  updateNavBadges();
+  showToast('Solicitud rechazada');
+}
+
+/* ---- Modal: técnico solicita envío a servicio desde la ficha del equipo ---- */
+function openSolicitudServicioModal(){
+  const sel = document.getElementById('solServicioEquipo');
+  sel.innerHTML = '<option value="">Selecciona un equipo del inventario…</option>' +
+    equipos.map(e=>`<option value="${e.id}">${e.nombre} — ${e.id}</option>`).join('');
+  sel.value = '';
+  document.getElementById('solServicioMotivo').value = '';
+  document.querySelectorAll('#solServicioUrgencia .urgency-opt').forEach(o=>o.classList.remove('selected'));
+  document.querySelector('#solServicioUrgencia .sel-reg').classList.add('selected');
+  document.getElementById('solicitudServicioModalOverlay').classList.add('active');
+}
+function closeSolicitudServicioModal(){
+  document.getElementById('solicitudServicioModalOverlay').classList.remove('active');
+}
+function selectSolServicioUrgencia(el){
+  document.querySelectorAll('#solServicioUrgencia .urgency-opt').forEach(o=>o.classList.remove('selected'));
+  el.classList.add('selected');
+}
+function submitSolicitudServicio(){
+  const equipoId = document.getElementById('solServicioEquipo').value;
+  if(!equipoId){ showToast('Selecciona un equipo'); return; }
+  const motivo = document.getElementById('solServicioMotivo').value.trim();
+  if(!motivo){ showToast('Describe el motivo de la solicitud'); return; }
+  const urgencia = document.querySelector('#solServicioUrgencia .selected').dataset.val;
+  const pid = 'AP-' + String(solicitudPendienteSeq++).padStart(4,'0');
+  solicitudesPendientes.push({
+    id: pid, tipo:'servicio', equipoId, motivo, urgencia,
+    solicitadoPor: currentUser, fecha: new Date().toISOString().slice(0,10),
+    hora: new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}),
+    estado:'Pendiente', motivoRechazo:'', ordenFolio:''
+  });
+  closeSolicitudServicioModal();
+  renderAprobaciones();
+  renderMisSolicitudes();
+  updateNavBadges();
+  showToast('Solicitud enviada — pendiente de aprobación del coordinador');
+}
+
 /* ===================== MANTENIMIENTO CORRECTIVO ===================== */
+function categoriaPill(cat){
+  return {
+    "Urgente emergencia": '<span class="pill pill-red">Urgente emergencia</span>',
+    "Urgente": '<span class="pill pill-amber">Urgente</span>',
+    "Regular": '<span class="pill pill-green">Regular</span>',
+    "Pospuesta": '<span class="pill pill-gray">Pospuesta</span>'
+  }[cat] || `<span class="pill pill-gray">${cat}</span>`;
+}
+function estadoOrdenPill(estado){
+  if(estado === 'Cerrada') return '<span class="pill pill-green">Cerrada</span>';
+  if(estado === 'Resuelto por proveedor') return '<span class="pill pill-clay">Resuelto por proveedor</span>';
+  if(estado === 'En proceso') return '<span class="pill pill-amber">En proceso</span>';
+  return '<span class="pill pill-red">Abierta</span>';
+}
+// La orden más reciente y todavía no cerrada de un equipo (la que corresponde
+// al servicio activo que lo tiene fuera de operación).
+function ordenActivaDeEquipo(equipoId){
+  return correctivo.find(c => c.equipoId === equipoId && c.estado !== 'Cerrada') || null;
+}
 function renderCorrectivo(){
   const body = document.getElementById('correctivoBody');
   body.innerHTML = correctivo.map(c=>{
     const e = equipoById(c.equipoId);
-    const catPill = {
-      "Urgente emergencia": '<span class="pill pill-red">Urgente emergencia</span>',
-      "Urgente": '<span class="pill pill-amber">Urgente</span>',
-      "Regular": '<span class="pill pill-green">Regular</span>',
-      "Pospuesta": '<span class="pill pill-gray">Pospuesta</span>'
-    }[c.categoria] || `<span class="pill pill-gray">${c.categoria}</span>`;
-    const estPill = c.estado==='Cerrada' ? '<span class="pill pill-green">Cerrada</span>'
-                  : c.estado==='En proceso' ? '<span class="pill pill-amber">En proceso</span>'
-                  : '<span class="pill pill-red">Abierta</span>';
     return `
-    <tr class="clickable" onclick="openDrawer('${c.equipoId}')">
+    <tr class="clickable" onclick="openHospOrderModal('${c.folio}')">
       <td class="mono">${c.folio}</td>
       <td><div class="cell-primary">${e ? e.nombre : '—'}</div><div class="cell-sub">${assetTag(c.equipoId)}</div></td>
-      <td style="font-size:12.5px; color:var(--muted);">${c.origen}</td>
-      <td>${catPill}</td>
-      <td>${estPill}</td>
+      <td style="font-size:12.5px; color:var(--muted); max-width:220px;">
+        ${c.origen}
+        ${c.detalle ? `<div class="cell-sub" style="margin-top:3px; white-space:normal;">${c.detalle}</div>` : ''}
+      </td>
+      <td>${categoriaPill(c.categoria)}</td>
+      <td>${estadoOrdenPill(c.estado)}</td>
       <td>${c.tecnico}</td>
       <td class="mono" style="font-size:12px;">${fmtDate(c.fecha)}</td>
     </tr>`;
@@ -1564,6 +2870,136 @@ function renderCorrectivo(){
   document.getElementById('corrUrg').textContent = correctivo.filter(c=>c.categoria==='Urgente' && c.estado!=='Cerrada').length;
   document.getElementById('corrReg').textContent = correctivo.filter(c=>c.categoria==='Regular' && c.estado!=='Cerrada').length;
   document.getElementById('corrPos').textContent = correctivo.filter(c=>c.categoria==='Pospuesta' && c.estado!=='Cerrada').length;
+
+  const porValidar = correctivo.filter(c=>c.estado==='Resuelto por proveedor').length;
+  const banner = document.getElementById('corrValidarBanner');
+  if(banner){
+    if(porValidar > 0 && (currentRole==='admin' || currentRole==='coordinador')){
+      banner.style.display = 'flex';
+      document.getElementById('corrValidarCount').textContent = porValidar;
+    } else {
+      banner.style.display = 'none';
+    }
+  }
+}
+
+/* ---- Detalle y validación de una orden, del lado del hospital ---- */
+let currentHospOrderFolio = null;
+function openHospOrderModal(folio){
+  const c = correctivo.find(x=>x.folio===folio);
+  if(!c) return;
+  currentHospOrderFolio = folio;
+  const e = equipoById(c.equipoId);
+
+  document.getElementById('hospOrderTitle').textContent = 'Orden ' + c.folio + ' — ' + (e ? e.nombre : c.equipoId);
+  document.getElementById('hospOrderSub').textContent = e ? (e.area + ' · ' + e.id) : '';
+
+  document.getElementById('hospOrderInfo').innerHTML = `
+    <div class="kv" style="margin-bottom:4px;">
+      <div class="kv-item"><div class="k">Origen</div><div class="v" style="font-weight:500;">${c.origen}</div></div>
+      <div class="kv-item"><div class="k">Categoría</div><div class="v">${categoriaPill(c.categoria)}</div></div>
+      <div class="kv-item"><div class="k">Estado actual</div><div class="v">${estadoOrdenPill(c.estado)}</div></div>
+      <div class="kv-item"><div class="k">Fecha de reporte</div><div class="v">${fmtDate(c.fecha)}</div></div>
+      <div class="kv-item"><div class="k">Técnico del proveedor</div><div class="v">${c.tecnico && c.tecnico!=='Sin asignar' ? c.tecnico : 'Sin asignar'}</div></div>
+    </div>
+    ${c.detalle ? `<div class="scope-note" style="margin-bottom:4px;"><strong>Reportado por el hospital:</strong> ${c.detalle}</div>` : ''}
+    ${e ? `<button class="btn btn-ghost btn-sm" onclick="closeHospOrderModal(); openDrawer('${e.id}');">Ver ficha del equipo</button>` : ''}
+  `;
+
+  const puedeValidar = (currentRole === 'admin' || currentRole === 'coordinador');
+  let validacionHtml = '';
+  let footHtml = `<button class="btn btn-ghost" onclick="closeHospOrderModal()">Cerrar</button>`;
+
+  if(c.estado === 'Resuelto por proveedor'){
+    validacionHtml = `
+      <div class="scope-note" style="border-color:var(--clay-600); background:var(--clay-100); color:var(--clay-600); margin-top:10px;">
+        <strong>Lo que reportó el proveedor</strong> — ${c.resueltoPor}, ${fmtDate(c.fechaResuelto)}:
+        <div style="margin-top:5px;">${c.notasProveedor || 'Sin detalle registrado.'}</div>
+      </div>
+      ${puedeValidar ? `
+      <div class="field" style="margin-top:12px;">
+        <label>Comentario de validación <span class="hint">— opcional</span></label>
+        <textarea class="input" id="hospValidacionComentario" placeholder="Ej. Verificado en sitio, equipo probado y funcionando correctamente."></textarea>
+      </div>` : `<div class="scope-note" style="margin-top:10px;">Solo el Director o el Coordinador Biomédico pueden confirmar y cerrar esta orden.</div>`}
+    `;
+    if(puedeValidar){
+      footHtml = `<button class="btn btn-ghost" onclick="closeHospOrderModal()">Cerrar</button>
+        <button class="btn btn-primary" onclick="confirmarYCerrarOrdenHospital()">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg>
+          Confirmar que se realizó y cerrar
+        </button>`;
+    }
+  } else if(c.estado === 'Cerrada'){
+    validacionHtml = `
+      <div class="scope-note" style="border-color:var(--green-600); background:var(--green-100); color:#215335; margin-top:10px;">
+        <strong>Cerrada</strong> — validada por ${c.validadoPor || '—'} el ${fmtDate(c.fechaCierre)}.
+        ${c.comentarioValidacion ? `<div style="margin-top:5px;">"${c.comentarioValidacion}"</div>` : ''}
+        ${c.notasProveedor ? `<div style="margin-top:8px; padding-top:8px; border-top:1px solid #bcdcc7;"><strong>Reportado por el proveedor</strong> (${c.resueltoPor}, ${fmtDate(c.fechaResuelto)}): ${c.notasProveedor}</div>` : ''}
+      </div>`;
+  } else {
+    validacionHtml = `<div class="scope-note" style="margin-top:10px;">Esta orden todavía no ha sido marcada como resuelta por el proveedor.</div>`;
+  }
+
+  document.getElementById('hospOrderValidacion').innerHTML = validacionHtml + bitacoraHTML(c.bitacora);
+  document.getElementById('hospOrderFoot').innerHTML = footHtml;
+  document.getElementById('hospOrderModalOverlay').classList.add('active');
+}
+function closeHospOrderModal(){
+  document.getElementById('hospOrderModalOverlay').classList.remove('active');
+  currentHospOrderFolio = null;
+}
+function confirmarYCerrarOrdenHospital(){
+  if(!currentHospOrderFolio) return;
+  const comentarioEl = document.getElementById('hospValidacionComentario');
+  const comentario = comentarioEl ? comentarioEl.value.trim() : '';
+  const hoy = new Date().toISOString().slice(0,10);
+  actualizarOrdenGlobal('HOSP-1', currentHospOrderFolio, {
+    estado:'Cerrada', validadoPor: currentUser, fechaCierre: hoy, comentarioValidacion: comentario
+  });
+  agregarBitacora('HOSP-1', currentHospOrderFolio, currentUser, 'Validada y cerrada por el hospital.' + (comentario ? ' — "'+comentario+'"' : ''));
+
+  const c = correctivo.find(x=>x.folio===currentHospOrderFolio);
+  if(c){
+    const e = equipoById(c.equipoId);
+    if(e){
+      // Si la orden viene de "Enviar a servicio" (Programa de Mantenimiento) o de un
+      // IMP programado, cerrarla equivale a completar el mantenimiento preventivo:
+      // se registra como tal para que Programa de Mantenimiento recalcule la próxima
+      // fecha automáticamente, sin necesitar un clic aparte en "Registrar realizado".
+      const esPreventivo = c.origen === 'IMP programado' || c.origen.indexOf('Enviado a servicio') === 0;
+      e.historial.unshift({
+        fecha: hoy,
+        tipo: esPreventivo ? 'Preventivo' : 'Correctivo',
+        detalle: esPreventivo
+          ? 'Mantenimiento preventivo completado — orden '+c.folio+' validada por '+currentUserLabel()+'.'
+          : 'Orden '+c.folio+' validada y cerrada por '+currentUserLabel()+'.'
+      });
+
+      // Si no quedan otras órdenes abiertas para este equipo, regresa a Operativo.
+      const otrasAbiertas = correctivo.some(o => o.equipoId===e.id && o.folio!==c.folio && o.estado!=='Cerrada');
+      if(e.estado === 'En mantenimiento' && !otrasAbiertas){
+        e.estado = 'Operativo';
+        e.historial.unshift({fecha:hoy, tipo:'Estado', detalle:'Equipo vuelve a estar Operativo — orden '+c.folio+' cerrada, sin otras órdenes abiertas.'});
+      }
+    }
+
+    // Si esta orden vino de una solicitud de revisión, esa solicitud también
+    // se marca como resuelta para reflejarlo en Revisiones Diarias.
+    if(c.solicitudFolio){
+      const sol = solicitudes.find(s => s.folio === c.solicitudFolio);
+      if(sol) sol.estado = 'Resuelta';
+      renderSolicitudes();
+    }
+  }
+
+  closeHospOrderModal();
+  renderCorrectivo();
+  renderInventario();
+  renderMantenimiento();
+  renderChecklist();
+  renderDashboard();
+  updateNavBadges();
+  showToast('Orden confirmada y cerrada', 'success');
 }
 
 /* ===================== GE CALCULATOR MODAL ===================== */
@@ -1640,6 +3076,7 @@ function saveNewEquipo(){
   if(!nombre){ showToast('Indica el nombre del equipo'); return; }
   const seq = equipos.length + 1;
   const id = 'EQ-' + String(700 + seq).padStart(4,'0');
+  const hoy = new Date().toISOString().slice(0,10);
   const nuevo = {
     id, nombre,
     marca: document.getElementById('newMarca').value.trim() || '—',
@@ -1647,14 +3084,15 @@ function saveNewEquipo(){
     area: document.getElementById('newUbicacion').value.trim() || 'Sin asignar',
     categoria: document.getElementById('newCategoria').value,
     estado: 'Operativo',
-    adquisicion: new Date().toISOString().slice(0,10),
+    adquisicion: hoy, instalacion: hoy, fechaAlta: hoy, vidaUtilAnios: 8,
     proveedor: document.getElementById('newProveedor').value.trim() || '—',
+    proveedorServicio: 'Cléra — Gestión integral (contrato vigente)',
     tipoRiesgo: 'Por definir',
     ge:{funcion:2, aplicacion:1, mantenimiento:1, antecedentes:0},
     accesorios:[], manuales:[], garantia:'Sin registrar.', historial:[]
   };
   equipos.push(nuevo);
-  checklists[id] = { items: CHECK_ITEMS.map(label=>({label, checked:false})), responsable:'', nota:'', guardadoHoy:false, hora:'' };
+  checklists[id] = { items: CHECK_ITEMS.map(label=>({label, checked:false})), responsable:'', nota:'', guardadoHoy:false, hora:'', incidencias:[] };
   closeAddEquipoModal();
   populateAreaFilter();
   renderInventario();
@@ -1663,6 +3101,99 @@ function saveNewEquipo(){
   renderDashboard();
   updateNavBadges();
   showToast('Equipo agregado — clasifícalo en Programa de Mantenimiento');
+}
+
+/* ===================== EDITAR / DESHABILITAR / SERVICIO / ELIMINAR EQUIPO ===================== */
+function openEditEquipoModal(){
+  const e = equipoById(currentDrawerId);
+  if(!e) return;
+  document.getElementById('editNombre').value = e.nombre;
+  document.getElementById('editMarca').value = e.marca;
+  document.getElementById('editSerie').value = e.serie;
+  document.getElementById('editUbicacion').value = e.area;
+  document.getElementById('editCategoria').value = e.categoria;
+  document.getElementById('editProveedor').value = e.proveedor;
+  document.getElementById('editEstado').value = e.estado;
+  document.getElementById('editEquipoOverlay').classList.add('active');
+}
+function closeEditEquipoModal(){ document.getElementById('editEquipoOverlay').classList.remove('active'); }
+function saveEditEquipo(){
+  const e = equipoById(currentDrawerId);
+  if(!e) return;
+  const nombre = document.getElementById('editNombre').value.trim();
+  if(!nombre){ showToast('Indica el nombre del equipo'); return; }
+  e.nombre = nombre;
+  e.marca = document.getElementById('editMarca').value.trim() || '—';
+  e.serie = document.getElementById('editSerie').value.trim() || '—';
+  e.area = document.getElementById('editUbicacion').value.trim() || 'Sin asignar';
+  e.categoria = document.getElementById('editCategoria').value;
+  e.proveedor = document.getElementById('editProveedor').value.trim() || '—';
+  e.estado = document.getElementById('editEstado').value;
+  closeEditEquipoModal();
+  populateAreaFilter();
+  renderInventario();
+  renderMantenimiento();
+  renderChecklist();
+  renderCorrectivo();
+  renderDashboard();
+  openDrawer(e.id);
+  showToast('Equipo actualizado');
+}
+
+function deshabilitarEquipo(id){
+  const e = equipoById(id);
+  if(!e) return;
+  if(!confirm('¿Marcar "'+e.nombre+'" como Fuera de servicio?')) return;
+  e.estado = 'Fuera de servicio';
+  e.historial.unshift({fecha:new Date().toISOString().slice(0,10), tipo:'Estado', detalle:'Equipo deshabilitado por '+currentUserLabel()+'.'});
+  renderInventario(); renderMantenimiento(); renderChecklist(); renderDashboard();
+  openDrawer(id);
+  showToast('Equipo marcado como fuera de servicio');
+}
+
+function enviarAServicio(id){
+  const e = equipoById(id);
+  if(!e) return;
+  if(!confirm('¿Enviar "'+e.nombre+'" a servicio y crear una orden de mantenimiento?')) return;
+  e.estado = 'En mantenimiento';
+  e.historial.unshift({fecha:new Date().toISOString().slice(0,10), tipo:'Correctivo', detalle:'Enviado a servicio por '+currentUserLabel()+'.'});
+  const folioServicio = 'MC-'+String(correctivoFolioSeq++).padStart(4,'0');
+  correctivo.unshift({
+    folio:folioServicio,
+    equipoId:id, origen:'Enviado a servicio ('+currentUserLabel()+')',
+    categoria:'Regular', estado:'Abierta', tecnico:'Sin asignar', fecha:new Date().toISOString().slice(0,10),
+    notasProveedor:'', resueltoPor:'', fechaResuelto:'', validadoPor:'', fechaCierre:'', comentarioValidacion:'', bitacora:[]
+  });
+  agregarBitacora('HOSP-1', folioServicio, currentUser, 'Orden creada al enviar el equipo a servicio.');
+  renderInventario(); renderMantenimiento(); renderChecklist(); renderCorrectivo(); renderDashboard(); updateNavBadges();
+  openDrawer(id);
+  showToast('Equipo enviado a servicio');
+}
+
+function registrarPreventivoRealizado(id){
+  const e = equipoById(id);
+  if(!e) return;
+  if(!confirm('¿Registrar que el mantenimiento preventivo de "'+e.nombre+'" ya se realizó? Esto recalcula su próxima fecha programada.')) return;
+  const hoy = new Date().toISOString().slice(0,10);
+  e.historial.unshift({fecha:hoy, tipo:'Preventivo', detalle:'Mantenimiento preventivo realizado, registrado por '+currentUserLabel()+'.'});
+  if(e.estado === 'En mantenimiento') e.estado = 'Operativo';
+  renderInventario(); renderMantenimiento(); renderChecklist(); renderDashboard(); updateNavBadges();
+  showToast('Mantenimiento preventivo registrado — próxima fecha recalculada', 'success');
+}
+
+function eliminarEquipo(id){
+  const e = equipoById(id);
+  if(!e) return;
+  if(!confirm('Esta acción elimina permanentemente "'+e.nombre+'" del inventario. ¿Continuar?')) return;
+  equipos = equipos.filter(x=>x.id!==id);
+  delete checklists[id];
+  solicitudes = solicitudes.filter(s=>s.equipoId!==id);
+  correctivo = correctivo.filter(c=>c.equipoId!==id);
+  solicitudesPendientes = solicitudesPendientes.filter(p=>p.equipoId!==id);
+  closeDrawer();
+  populateAreaFilter();
+  renderInventario(); renderMantenimiento(); renderChecklist(); renderSolicitudes(); renderAprobaciones(); renderMisSolicitudes(); renderCorrectivo(); renderDashboard(); updateNavBadges();
+  showToast('Equipo eliminado del inventario');
 }
 
 /* ===================== DASHBOARD ===================== */
@@ -1716,6 +3247,91 @@ function renderDashboard(){
   const completadosHoy = Object.values(checklists).filter(c=>c.guardadoHoy).length;
   const pct = Math.round((completadosHoy/equipos.length)*100);
   document.getElementById('kpiCumplimiento').textContent = pct + '%';
+
+  renderIndicadoresExtra();
+}
+
+/* ---- Indicadores: preventivo vs correctivo, inactividad, costos ---- */
+function calcularRatioPreventivoCorrectivo(){
+  let prev = 0, corr = 0;
+  equipos.forEach(e=>{
+    (e.historial || []).forEach(h=>{
+      if(h.tipo === 'Preventivo') prev++;
+      else if(h.tipo === 'Correctivo') corr++;
+    });
+  });
+  const total = prev + corr;
+  return {prev, corr, total, pctPrev: total ? Math.round(prev/total*100) : 0, pctCorr: total ? Math.round(corr/total*100) : 0};
+}
+function calcularInactividadPorEquipo(){
+  const map = {};
+  correctivo.forEach(c=>{
+    if(c.fechaCierre){
+      const d1 = new Date(c.fecha+'T00:00:00'), d2 = new Date(c.fechaCierre+'T00:00:00');
+      const dias = Math.max(0, Math.round((d2-d1)/86400000));
+      if(!map[c.equipoId]) map[c.equipoId] = {dias:0, ordenes:0};
+      map[c.equipoId].dias += dias;
+      map[c.equipoId].ordenes += 1;
+    }
+  });
+  return Object.entries(map)
+    .map(([equipoId, v])=>({equipoId, ...v, equipo: equipoById(equipoId)}))
+    .filter(x=>x.equipo)
+    .sort((a,b)=> b.dias - a.dias);
+}
+function calcularCostosMantenimiento(){
+  const conCosto = correctivo.filter(c=> typeof c.costoEstimado === 'number' && c.costoEstimado > 0);
+  const total = conCosto.reduce((s,c)=> s + c.costoEstimado, 0);
+  const porCategoria = {};
+  conCosto.forEach(c=>{ porCategoria[c.categoria] = (porCategoria[c.categoria] || 0) + c.costoEstimado; });
+  return {total, count: conCosto.length, promedio: conCosto.length ? total/conCosto.length : 0, porCategoria};
+}
+function fmtMXN(n){ return '$' + Math.round(n).toLocaleString('es-MX') + ' MXN'; }
+
+function renderIndicadoresExtra(){
+  const ratioEl = document.getElementById('indRatioBar');
+  if(!ratioEl) return; // la vista de Indicadores aún no se ha pintado
+
+  const r = calcularRatioPreventivoCorrectivo();
+  document.getElementById('kpiRatioPrevCorr').textContent = r.total ? `${r.pctPrev}% / ${r.pctCorr}%` : '—';
+  ratioEl.innerHTML = r.total ? `
+    <div class="ge-track" style="height:14px;">
+      <div class="ge-seg" style="width:${r.pctPrev}%; background:var(--teal-600);"></div>
+      <div class="ge-seg" style="width:${r.pctCorr}%; background:var(--clay-600);"></div>
+    </div>
+    <div class="ge-legend">
+      <span><i style="background:var(--teal-600)"></i>Preventivo: ${r.prev} evento(s) — ${r.pctPrev}%</span>
+      <span><i style="background:var(--clay-600)"></i>Correctivo: ${r.corr} evento(s) — ${r.pctCorr}%</span>
+    </div>` : `<div class="scope-note">Aún no hay eventos de mantenimiento registrados.</div>`;
+
+  const inact = calcularInactividadPorEquipo();
+  const totalDias = inact.reduce((s,x)=>s+x.dias, 0);
+  const totalOrdenes = inact.reduce((s,x)=>s+x.ordenes, 0);
+  document.getElementById('kpiPromInactividad').textContent = totalOrdenes ? (totalDias/totalOrdenes).toFixed(1) + ' días' : '—';
+  const inactList = document.getElementById('indInactividadList');
+  const maxDias = Math.max(1, ...inact.map(x=>x.dias));
+  inactList.innerHTML = inact.length ? inact.slice(0,6).map(x=>`
+    <div class="bar-row">
+      <div class="bar-label">${x.equipo.nombre}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${(x.dias/maxDias*100)}%; background:var(--clay-600);"></div></div>
+      <div class="bar-value">${x.dias} d</div>
+    </div>`).join('') : `<div class="scope-note">Aún no hay órdenes cerradas para calcular tiempos de inactividad.</div>`;
+
+  const costos = calcularCostosMantenimiento();
+  document.getElementById('kpiCostoTotal').textContent = costos.count ? fmtMXN(costos.total) : '—';
+  const costoDetalle = document.getElementById('indCostoDetalle');
+  if(costos.count){
+    const cats = Object.entries(costos.porCategoria).sort((a,b)=>b[1]-a[1]);
+    const maxCat = Math.max(1, ...cats.map(c=>c[1]));
+    costoDetalle.innerHTML = cats.map(([cat, monto])=>`
+      <div class="bar-row">
+        <div class="bar-label">${cat}</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${(monto/maxCat*100)}%; background:var(--teal-600);"></div></div>
+        <div class="bar-value" style="width:auto; font-size:11px;">${fmtMXN(monto)}</div>
+      </div>`).join('') + `<div class="scope-note">Promedio por orden: ${fmtMXN(costos.promedio)} · ${costos.count} orden(es) con costo registrado.</div>`;
+  } else {
+    costoDetalle.innerHTML = `<div class="scope-note">Aún no hay costos registrados. El proveedor los captura al resolver una orden en Órdenes de Servicio.</div>`;
+  }
 }
 
 function updateNavBadges(){
@@ -1728,10 +3344,466 @@ function updateNavBadges(){
   badgeCorr.style.display = corrAbiertas>0 ? '' : 'none';
 }
 
-/* ===================== LOGIN GATE ===================== */
-const ALLOWED_USERS = ["esaupreciado", "octaviorojas", "fernandoreyes"];
+/* ===================== PORTAL DE PROVEEDOR (CLÉRA) ===================== */
+function hospitalById(id){ return hospitales.find(h=>h.id===id); }
+
+// Calcula el estado de vigencia del contrato de un hospital según su fecha de renovación.
+function estadoContrato(h){
+  if(!h.contratoRenovacion) return {estado:'sin-dato', dias:null};
+  const hoy = new Date();
+  const renov = new Date(h.contratoRenovacion + 'T00:00:00');
+  const dias = Math.round((renov - hoy) / 86400000);
+  if(dias < 0) return {estado:'vencido', dias};
+  if(dias <= 60) return {estado:'por-vencer', dias};
+  return {estado:'vigente', dias};
+}
+function contratoPill(h){
+  const c = estadoContrato(h);
+  if(c.estado === 'vencido') return `<span class="pill pill-red">Contrato vencido</span>`;
+  if(c.estado === 'por-vencer') return `<span class="pill pill-amber">Renueva en ${c.dias} días</span>`;
+  if(c.estado === 'vigente') return `<span class="pill pill-green">Contrato vigente</span>`;
+  return `<span class="pill pill-gray">Sin dato</span>`;
+}
+
+// Normaliza los equipos de un hospital, sin importar si vienen del inventario
+// real (Hospital General del Valle) o del resumen de un hospital de ejemplo.
+function obtenerEquiposDeHospital(hospId){
+  if(hospId === 'HOSP-1'){
+    return equipos.map(e=>({id:e.id, nombre:e.nombre, marca:e.marca, serie:e.serie, area:e.area, estado:e.estado}));
+  }
+  const h = hospitalById(hospId);
+  return h ? (h.equiposResumen || []) : [];
+}
+
+// Normaliza las órdenes de servicio de un hospital: para HOSP-1 se leen
+// directamente del arreglo `correctivo` (el mismo que ve el hospital), para
+// los demás se leen de su `ordenesResumen` propio.
+function obtenerOrdenesDeHospital(hospId){
+  if(hospId === 'HOSP-1'){
+    return correctivo.map(c=>({
+      hospId:'HOSP-1', folio:c.folio, equipoId:c.equipoId,
+      equipoNombre: (equipoById(c.equipoId)||{}).nombre || '—',
+      origen:c.origen, detalle:c.detalle || '', categoria:c.categoria, estado:c.estado,
+      tecnico:c.tecnico, fecha:c.fecha,
+      notasProveedor:c.notasProveedor || '', resueltoPor:c.resueltoPor || '', fechaResuelto:c.fechaResuelto || '',
+      validadoPor:c.validadoPor || '', fechaCierre:c.fechaCierre || '', comentarioValidacion:c.comentarioValidacion || '',
+      bitacora:c.bitacora || []
+    }));
+  }
+  const h = hospitalById(hospId);
+  return h ? (h.ordenesResumen || []).map(o=>({hospId, ...o})) : [];
+}
+function todasLasOrdenesProveedor(){
+  return hospitales.flatMap(h=> obtenerOrdenesDeHospital(h.id));
+}
+// Aplica cambios a una orden, sin importar si vive en `correctivo` (HOSP-1)
+// o en el `ordenesResumen` embebido de un hospital de ejemplo.
+function actualizarOrdenGlobal(hospId, folio, cambios){
+  if(hospId === 'HOSP-1'){
+    const c = correctivo.find(x=>x.folio===folio);
+    if(c) Object.assign(c, cambios);
+    return;
+  }
+  const h = hospitalById(hospId);
+  if(!h) return;
+  const o = (h.ordenesResumen||[]).find(x=>x.folio===folio);
+  if(o) Object.assign(o, cambios);
+}
+// Agrega un evento a la bitácora de una orden (registro de quién hizo qué y cuándo).
+function agregarBitacora(hospId, folio, usuario, evento){
+  const entry = {
+    fecha: new Date().toISOString().slice(0,10),
+    hora: new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}),
+    usuario, evento
+  };
+  let destino = null;
+  if(hospId === 'HOSP-1'){
+    destino = correctivo.find(x=>x.folio===folio);
+  } else {
+    const h = hospitalById(hospId);
+    destino = h ? (h.ordenesResumen||[]).find(x=>x.folio===folio) : null;
+  }
+  if(!destino) return;
+  if(!destino.bitacora) destino.bitacora = [];
+  destino.bitacora.push(entry);
+}
+function bitacoraHTML(bitacora){
+  if(!bitacora || bitacora.length === 0) return `<div class="scope-note" style="margin-top:10px;">Sin eventos registrados en la bitácora.</div>`;
+  return `
+    <div class="section-title" style="font-size:12.5px; margin:14px 0 8px;">Bitácora de la orden</div>
+    <div class="timeline">
+      ${bitacora.map(b=>`
+        <div class="timeline-item">
+          <div class="t-date">${fmtDate(b.fecha)} · ${b.hora}</div>
+          <div class="t-title">${b.usuario}</div>
+          <div class="t-desc">${b.evento}</div>
+        </div>`).join('')}
+    </div>`;
+}
+
+function applyProviderRolePermissions(){
+  const esTecnico = currentRole === 'tecnico_proveedor';
+  document.querySelectorAll('#providerApp .nav-item[data-pview]').forEach(b=>{
+    const oculto = esTecnico && (b.dataset.pview === 'panel' || b.dataset.pview === 'hospitales');
+    b.style.display = oculto ? 'none' : '';
+  });
+  const heading = document.querySelector('#pview-ordenes .view-head h2');
+  const desc = document.querySelector('#pview-ordenes .view-desc');
+  if(heading) heading.textContent = esTecnico ? 'Mis Órdenes de Servicio' : 'Órdenes de Servicio';
+  if(desc) desc.textContent = esTecnico
+    ? 'Las órdenes que tienes asignadas, en todos los hospitales cliente.'
+    : 'Todas las órdenes de todos tus hospitales cliente, en un solo lugar.';
+}
+
+function switchProviderView(view){
+  const navKey = view === 'hospital-detalle' ? 'hospitales' : view;
+  document.querySelectorAll('#providerApp .nav-item[data-pview]').forEach(b=>b.classList.toggle('active', b.dataset.pview===navKey));
+  document.querySelectorAll('#providerApp .view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('pview-'+view).classList.add('active');
+  const ordenesTitle = currentRole === 'tecnico_proveedor' ? 'Mis Órdenes de Servicio' : 'Órdenes de Servicio';
+  const titles = {panel:'Panel General', hospitales:'Mis Hospitales', 'hospital-detalle': currentProvHospitalId ? hospitalById(currentProvHospitalId).nombre : 'Hospital', ordenes:ordenesTitle};
+  document.getElementById('provTopbarTitle').textContent = titles[view] || 'Panel General';
+  if(view === 'panel') renderProviderPanel();
+  if(view === 'hospitales') renderProviderHospitales();
+  if(view === 'ordenes') renderProviderOrdenesGlobal();
+  window.scrollTo({top:0, behavior:'instant'});
+}
+
+function initProviderPortal(){
+  applyProviderRolePermissions();
+  renderProviderPanel();
+  renderProviderHospitales();
+  renderProviderOrdenesGlobal();
+  const vistaInicial = currentRole === 'tecnico_proveedor' ? 'ordenes' : 'panel';
+  switchProviderView(vistaInicial);
+}
+
+function renderProviderPanel(){
+  const grid = document.getElementById('panelHospitales');
+  if(!grid) return;
+
+  const todasOrdenes = todasLasOrdenesProveedor();
+  const totalEquipos = hospitales.reduce((sum,h)=> sum + obtenerEquiposDeHospital(h.id).length, 0);
+  const abiertas = todasOrdenes.filter(o=> o.estado!=='Cerrada').length;
+  const porValidar = todasOrdenes.filter(o=> o.estado==='Resuelto por proveedor').length;
+  const cerradas = todasOrdenes.filter(o=> o.estado==='Cerrada').length;
+
+  document.getElementById('panelHospitales').textContent = hospitales.length;
+  document.getElementById('panelEquipos').textContent = totalEquipos;
+  document.getElementById('panelAbiertas').textContent = abiertas;
+  document.getElementById('panelPorValidar').textContent = porValidar;
+  document.getElementById('panelCerradas').textContent = cerradas;
+
+  // Tiempo promedio de resolución: días entre fecha de reporte y fecha en que
+  // el proveedor la marcó como resuelta (para órdenes que ya tienen ambas fechas).
+  const resueltas = todasOrdenes.filter(o=> o.fecha && o.fechaResuelto);
+  if(resueltas.length > 0){
+    const totalDias = resueltas.reduce((sum,o)=>{
+      const d1 = new Date(o.fecha+'T00:00:00'), d2 = new Date(o.fechaResuelto+'T00:00:00');
+      return sum + Math.max(0, Math.round((d2-d1)/86400000));
+    }, 0);
+    const prom = (totalDias / resueltas.length).toFixed(1);
+    document.getElementById('panelTiempoResolucion').textContent = prom + ' días';
+  } else {
+    document.getElementById('panelTiempoResolucion').textContent = '—';
+  }
+
+  const contratosPorVencer = hospitales.filter(h=>{
+    const c = estadoContrato(h);
+    return c.estado === 'por-vencer' || c.estado === 'vencido';
+  }).length;
+  document.getElementById('panelContratos').textContent = contratosPorVencer;
+
+  const porHospital = document.getElementById('panelPorHospital');
+  const maxAbiertas = Math.max(1, ...hospitales.map(h=> obtenerOrdenesDeHospital(h.id).filter(o=>o.estado!=='Cerrada').length));
+  porHospital.innerHTML = hospitales.map(h=>{
+    const ords = obtenerOrdenesDeHospital(h.id);
+    const n = ords.filter(o=>o.estado!=='Cerrada').length;
+    return `
+    <div class="bar-row">
+      <div class="bar-label">${h.nombre}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${(n/maxAbiertas*100)}%; background:${n>0?'var(--clay-600)':'var(--teal-600)'}"></div></div>
+      <div class="bar-value">${n}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderProviderHospitales(){
+  const grid = document.getElementById('provHospitalesGrid');
+  if(!grid) return;
+  grid.innerHTML = hospitales.map(h=>{
+    const eqs = obtenerEquiposDeHospital(h.id);
+    const ords = obtenerOrdenesDeHospital(h.id);
+    const abiertas = ords.filter(o=>o.estado!=='Cerrada').length;
+    return `
+    <div class="prov-hosp-card" onclick="openHospitalDetalle('${h.id}')">
+      <div class="prov-hosp-top">
+        <div>
+          <div class="cell-primary" style="font-size:15px;">${h.nombre}</div>
+          <div class="cell-sub">${h.ciudad}</div>
+        </div>
+        <span class="pill ${h.tipo==='Público' ? 'pill-teal' : 'pill-clay'}">${h.tipo}</span>
+      </div>
+      <div class="cell-sub">${h.contrato}</div>
+      <div style="margin-top:8px;">${contratoPill(h)}</div>
+      <div class="prov-hosp-stats">
+        <div class="prov-hosp-stat"><div class="n">${eqs.length}</div><div class="l">Equipos</div></div>
+        <div class="prov-hosp-stat"><div class="n" style="color:${abiertas>0?'var(--red-700)':'inherit'}">${abiertas}</div><div class="l">Órdenes abiertas</div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+let currentProvHospitalId = null;
+function openHospitalDetalle(hospId){
+  currentProvHospitalId = hospId;
+  const h = hospitalById(hospId);
+  document.getElementById('provHospNombre').textContent = h.nombre;
+  document.getElementById('provHospSub').textContent = `${h.ciudad} · ${h.contrato}`;
+  renderHospitalInfoTab(h);
+  renderHospitalEquiposTab(h);
+  renderHospitalOrdenesTab(h);
+  switchProviderHospitalTab('info');
+  switchProviderView('hospital-detalle');
+}
+
+function switchProviderHospitalTab(tab){
+  document.querySelectorAll('#pview-hospital-detalle [data-phtab]').forEach(b=>b.classList.toggle('active', b.dataset.phtab===tab));
+  document.querySelectorAll('#pview-hospital-detalle .tab-pane').forEach(p=>p.classList.remove('active'));
+  document.getElementById('phtab-'+tab).classList.add('active');
+}
+
+function renderHospitalInfoTab(h){
+  document.getElementById('provHospInfoKv').innerHTML = `
+    <div class="kv-item"><div class="k">Nombre</div><div class="v">${h.nombre}</div></div>
+    <div class="kv-item"><div class="k">Tipo</div><div class="v">${h.tipo}</div></div>
+    <div class="kv-item"><div class="k">Ciudad</div><div class="v">${h.ciudad}</div></div>
+    <div class="kv-item"><div class="k">Dirección</div><div class="v">${h.direccion}</div></div>
+    <div class="kv-item"><div class="k">Contacto</div><div class="v">${h.contacto}</div></div>
+    <div class="kv-item"><div class="k">Teléfono</div><div class="v mono">${h.telefono}</div></div>
+    <div class="kv-item"><div class="k">Tipo de contrato</div><div class="v">${h.contrato}</div></div>
+    <div class="kv-item"><div class="k">Inicio del servicio</div><div class="v">${fmtDate(h.inicioServicio)}</div></div>
+    <div class="kv-item"><div class="k">Valor del contrato</div><div class="v">${h.contratoValor || '—'}</div></div>
+    <div class="kv-item"><div class="k">Próxima renovación</div><div class="v">${h.contratoRenovacion ? fmtDate(h.contratoRenovacion) : '—'} · ${contratoPill(h)}</div></div>
+  `;
+}
+
+function renderHospitalEquiposTab(h){
+  const eqs = obtenerEquiposDeHospital(h.id);
+  document.getElementById('provHospEquiposCount').textContent = '(' + eqs.length + ')';
+  const body = document.getElementById('provHospEquiposBody');
+  if(eqs.length === 0){
+    body.innerHTML = `<tr><td colspan="5"><div class="empty-state">Sin equipos registrados para este hospital.</div></td></tr>`;
+    return;
+  }
+  body.innerHTML = eqs.map(e=>`
+    <tr class="${h.esReal ? 'clickable' : ''}" ${h.esReal ? `onclick="openDrawer('${e.id}')"` : ''}>
+      <td class="cell-primary">${e.nombre}</td>
+      <td>${assetTag(e.id)}</td>
+      <td>${e.marca}</td>
+      <td>${e.area}</td>
+      <td>${statusPill(e.estado)}</td>
+    </tr>`).join('');
+}
+
+function renderHospitalOrdenesTab(h){
+  const ords = obtenerOrdenesDeHospital(h.id);
+  document.getElementById('provHospOrdenesCount').textContent = '(' + ords.length + ')';
+  const body = document.getElementById('provHospOrdenesBody');
+  if(ords.length === 0){
+    body.innerHTML = `<tr><td colspan="7"><div class="empty-state">Sin órdenes de servicio registradas.</div></td></tr>`;
+    return;
+  }
+  body.innerHTML = ords.map(o=>`
+    <tr class="clickable" onclick="openProviderOrderModal('${o.hospId}','${o.folio}')">
+      <td class="mono">${o.folio}</td>
+      <td>${o.equipoNombre}</td>
+      <td>${categoriaPill(o.categoria)}</td>
+      <td>${estadoOrdenPill(o.estado)}</td>
+      <td style="font-size:12.5px;">${o.tecnico && o.tecnico!=='Sin asignar' ? o.tecnico : '<span style="color:var(--muted);">Sin asignar</span>'}</td>
+      <td class="mono" style="font-size:12px;">${fmtDate(o.fecha)}</td>
+      <td style="text-align:right;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="var(--muted)" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></td>
+    </tr>`).join('');
+}
+
+function renderProviderOrdenesGlobal(){
+  const body = document.getElementById('provOrdenesGlobalBody');
+  if(!body) return;
+  let ords = todasLasOrdenesProveedor();
+  if(currentRole === 'tecnico_proveedor'){
+    const miNombre = USER_ROLES[currentUser].nombreCompleto;
+    ords = ords.filter(o => o.tecnico === miNombre);
+  }
+  ords = ords.slice().sort((a,b)=> b.fecha.localeCompare(a.fecha));
+  const abiertas = ords.filter(o=>o.estado!=='Cerrada').length;
+  const badge = document.getElementById('provNavBadgeOrdenes');
+  if(badge){ badge.textContent = abiertas; badge.style.display = abiertas>0 ? '' : 'none'; }
+
+  document.getElementById('provOrdEmerg').textContent = ords.filter(o=>o.categoria==='Urgente emergencia' && o.estado!=='Cerrada').length;
+  document.getElementById('provOrdUrg').textContent = ords.filter(o=>o.categoria==='Urgente' && o.estado!=='Cerrada').length;
+  document.getElementById('provOrdReg').textContent = ords.filter(o=>o.categoria==='Regular' && o.estado!=='Cerrada').length;
+  document.getElementById('provOrdCerradas').textContent = ords.filter(o=>o.estado==='Cerrada').length;
+
+  if(ords.length === 0){
+    body.innerHTML = `<tr><td colspan="8"><div class="empty-state">${currentRole==='tecnico_proveedor' ? 'No tienes órdenes asignadas por el momento.' : 'Sin órdenes de servicio registradas todavía.'}</div></td></tr>`;
+    return;
+  }
+  body.innerHTML = ords.map(o=>{
+    const h = hospitalById(o.hospId);
+    return `
+    <tr class="clickable" onclick="openProviderOrderModal('${o.hospId}','${o.folio}')">
+      <td class="mono">${o.folio}</td>
+      <td>${h ? h.nombre : '—'}</td>
+      <td><div class="cell-primary">${o.equipoNombre}</div></td>
+      <td>${categoriaPill(o.categoria)}</td>
+      <td>${estadoOrdenPill(o.estado)}</td>
+      <td style="font-size:12.5px;">${o.tecnico && o.tecnico!=='Sin asignar' ? o.tecnico : '<span style="color:var(--muted);">Sin asignar</span>'}</td>
+      <td class="mono" style="font-size:12px;">${fmtDate(o.fecha)}</td>
+      <td style="text-align:right;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="var(--muted)" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></td>
+    </tr>`;
+  }).join('');
+}
+
+/* ---- Modal de detalle / cierre de orden ---- */
+let currentProvOrder = null; // {hospId, folio}
+function openProviderOrderModal(hospId, folio){
+  const ords = obtenerOrdenesDeHospital(hospId);
+  const o = ords.find(x=>x.folio===folio);
+  if(!o) return;
+  currentProvOrder = {hospId, folio};
+  const h = hospitalById(hospId);
+
+  document.getElementById('provOrderTitle').textContent = 'Orden ' + o.folio + ' — ' + o.equipoNombre;
+  document.getElementById('provOrderSub').textContent = h.nombre;
+
+  let estadoNota = '';
+  if(o.estado === 'Resuelto por proveedor'){
+    estadoNota = `<div class="scope-note" style="border-color:var(--clay-600); background:var(--clay-100); color:var(--clay-600);">
+      <strong>Marcado como resuelto</strong> por ${o.resueltoPor} el ${fmtDate(o.fechaResuelto)} — pendiente de que el hospital lo valide y cierre.
+    </div>`;
+  } else if(o.estado === 'Cerrada'){
+    estadoNota = `<div class="scope-note" style="border-color:var(--green-600); background:var(--green-100); color:#215335;">
+      <strong>Cerrada</strong> — validada por ${o.validadoPor || 'el hospital'} el ${fmtDate(o.fechaCierre)}.
+      ${o.comentarioValidacion ? `<div style="margin-top:4px;">"${o.comentarioValidacion}"</div>` : ''}
+    </div>`;
+  }
+
+  const tecnicoActual = o.tecnico && o.tecnico !== 'Sin asignar' ? o.tecnico : 'Sin asignar';
+  let tecnicoHTML;
+  if(currentRole === 'proveedor'){
+    const opciones = ['Sin asignar', ...TECNICOS_PROVEEDOR].map(t=>
+      `<option value="${t}" ${t===tecnicoActual ? 'selected' : ''}>${t}</option>`).join('');
+    tecnicoHTML = `<select class="select" style="width:100%; padding:5px 8px; font-size:13px;" onchange="cambiarTecnicoOrden(this.value)">${opciones}</select>`;
+  } else {
+    tecnicoHTML = `<span style="font-weight:600;">${tecnicoActual}</span>`;
+  }
+
+  document.getElementById('provOrderInfo').innerHTML = `
+    <div class="kv" style="margin-bottom:4px;">
+      <div class="kv-item"><div class="k">Origen</div><div class="v" style="font-weight:500;">${o.origen}</div></div>
+      <div class="kv-item"><div class="k">Categoría</div><div class="v">${categoriaPill(o.categoria)}</div></div>
+      <div class="kv-item"><div class="k">Estado actual</div><div class="v">${estadoOrdenPill(o.estado)}</div></div>
+      <div class="kv-item"><div class="k">Fecha de reporte</div><div class="v">${fmtDate(o.fecha)}</div></div>
+      <div class="kv-item" style="grid-column:1 / -1;"><div class="k">Técnico asignado</div><div class="v">${tecnicoHTML}</div></div>
+    </div>
+    ${o.detalle ? `<div class="scope-note" style="margin-bottom:4px;"><strong>Reportado por el hospital:</strong> ${o.detalle}</div>` : ''}
+    ${estadoNota}
+    ${bitacoraHTML(o.bitacora)}
+  `;
+  document.getElementById('provOrderNotas').value = o.notasProveedor || '';
+  document.getElementById('provOrderCosto').value = (typeof o.costoEstimado === 'number') ? o.costoEstimado : '';
+
+  const cerrada = o.estado === 'Cerrada';
+  document.getElementById('provOrderNotas').disabled = cerrada;
+  document.getElementById('provOrderCosto').disabled = cerrada;
+  document.getElementById('provOrderFoot').style.display = cerrada ? 'none' : 'flex';
+  document.getElementById('provOrderModalOverlay').classList.add('active');
+}
+function closeProviderOrderModal(){
+  document.getElementById('provOrderModalOverlay').classList.remove('active');
+  currentProvOrder = null;
+}
+function refrescarVistasOrdenProveedor(){
+  renderProviderOrdenesGlobal();
+  renderProviderHospitales();
+  if(currentProvHospitalId){
+    const h = hospitalById(currentProvHospitalId);
+    renderHospitalOrdenesTab(h);
+  }
+  if(currentProvOrder && currentProvOrder.hospId === 'HOSP-1'){ renderCorrectivo(); renderDashboard(); updateNavBadges(); }
+}
+function cambiarTecnicoOrden(nuevoTecnico){
+  if(!currentProvOrder || currentRole !== 'proveedor') return;
+  actualizarOrdenGlobal(currentProvOrder.hospId, currentProvOrder.folio, {tecnico: nuevoTecnico});
+  agregarBitacora(currentProvOrder.hospId, currentProvOrder.folio, currentUser,
+    nuevoTecnico === 'Sin asignar' ? 'Técnico desasignado de la orden.' : 'Técnico asignado: ' + nuevoTecnico + '.');
+  refrescarVistasOrdenProveedor();
+  openProviderOrderModal(currentProvOrder.hospId, currentProvOrder.folio);
+  showToast('Técnico ' + (nuevoTecnico === 'Sin asignar' ? 'desasignado' : 'asignado: ' + nuevoTecnico));
+}
+function leerCostoInput(){
+  const raw = document.getElementById('provOrderCosto').value;
+  if(raw === '' || raw === null) return null;
+  const n = Number(raw);
+  return isNaN(n) || n < 0 ? null : n;
+}
+function guardarNotasOrden(){
+  if(!currentProvOrder) return;
+  const notas = document.getElementById('provOrderNotas').value.trim();
+  const costo = leerCostoInput();
+  const cambios = {notasProveedor: notas};
+  if(costo !== null) cambios.costoEstimado = costo;
+  const ords = obtenerOrdenesDeHospital(currentProvOrder.hospId);
+  const actual = ords.find(o=>o.folio===currentProvOrder.folio);
+  const eraAbierta = actual && actual.estado === 'Abierta';
+  if(eraAbierta) cambios.estado = 'En proceso';
+  actualizarOrdenGlobal(currentProvOrder.hospId, currentProvOrder.folio, cambios);
+  agregarBitacora(currentProvOrder.hospId, currentProvOrder.folio, currentUser, eraAbierta ? 'Orden puesta en proceso, notas actualizadas.' : 'Notas actualizadas por el proveedor.');
+  refrescarVistasOrdenProveedor();
+  openProviderOrderModal(currentProvOrder.hospId, currentProvOrder.folio);
+  showToast('Notas guardadas en la orden');
+}
+function resolverYCerrarOrden(){
+  if(!currentProvOrder) return;
+  const notas = document.getElementById('provOrderNotas').value.trim();
+  if(!notas){ showToast('Describe el diagnóstico o la solución antes de marcarla como resuelta'); return; }
+  const costo = leerCostoInput();
+  const cambios = {estado:'Resuelto por proveedor', notasProveedor: notas, resueltoPor: currentUser, fechaResuelto: new Date().toISOString().slice(0,10)};
+  if(costo !== null) cambios.costoEstimado = costo;
+  actualizarOrdenGlobal(currentProvOrder.hospId, currentProvOrder.folio, cambios);
+  agregarBitacora(currentProvOrder.hospId, currentProvOrder.folio, currentUser, 'Marcada como resuelta por el proveedor.' + (costo!==null ? ' Costo estimado: '+fmtMXN(costo)+'.' : ''));
+  refrescarVistasOrdenProveedor();
+  closeProviderOrderModal();
+  showToast('Orden marcada como resuelta — el hospital debe validarla para cerrarla', 'success');
+}
+
+/* ===================== LOGIN GATE + ROLES ===================== */
+// Cada usuario tiene un rol fijo con permisos distintos:
+//   admin             -> fernandoreyes  (Director Biomédico, acceso completo, incluye eliminar)
+//   coordinador       -> esaupreciado   (Coordinador Biomédico: alta, edición, deshabilitar,
+//                                         enviar a servicio, solicitudes, reportes — no eliminar)
+//   tecnico           -> octaviorojas   (Técnico Biomédico del hospital: solo ver inventario y
+//                                         hacer rutinas)
+//   proveedor         -> clera_admin    (Equipo de Cléra: portal distinto, ve varios hospitales
+//                                         cliente, contratos, y todas las órdenes de servicio)
+//   tecnico_proveedor -> antonioperez   (Técnico Biomédico de Cléra: portal de proveedor, pero
+//                                         solo ve las órdenes que tiene asignadas — sin acceso
+//                                         al Panel General, Mis Hospitales ni contratos)
+const USER_ROLES = {
+  "fernandoreyes": {role:"admin",       label:"Director Biomédico",   initials:"FR", nombreCompleto:"Fernando Reyes"},
+  "esaupreciado":  {role:"coordinador", label:"Coordinador Biomédico",initials:"EP", nombreCompleto:"Esaú Preciado"},
+  "octaviorojas":  {role:"tecnico",     label:"Técnico Biomédico",    initials:"OR", nombreCompleto:"Octavio Rojas"},
+  "clera_admin":   {role:"proveedor",   label:"Proveedor de Servicio — Cléra", initials:"CA", nombreCompleto:"Equipo Cléra"},
+  "antonioperez":  {role:"tecnico_proveedor", label:"Técnico Biomédico — Cléra", initials:"AP", nombreCompleto:"Antonio Pérez"}
+};
+const ALLOWED_USERS = Object.keys(USER_ROLES);
 const TEAM_PASSWORD = "Clera2026";
+const DEFAULT_VIEW_BY_ROLE = {admin:"dashboard", coordinador:"dashboard", tecnico:"dashboard"};
+
 let loginSelectedUser = null;
+let currentRole = null;
+let currentUser = null;
+function currentUserLabel(){ return currentUser ? (USER_ROLES[currentUser].label + ' (' + currentUser + ')') : 'usuario'; }
 
 function selectLoginUser(el){
   document.querySelectorAll('.user-opt').forEach(o=>o.classList.remove('selected'));
@@ -1753,8 +3825,102 @@ function tryLogin(){
 }
 
 function grantAccess(user){
+  if(!USER_ROLES[user]) return;
+  currentUser = user;
+  currentRole = USER_ROLES[user].role;
   document.getElementById('loginGate').style.display = 'none';
-  document.querySelector('.user-name').textContent = user;
+
+  if(currentRole === 'proveedor' || currentRole === 'tecnico_proveedor'){
+    document.querySelector('.app').style.display = 'none';
+    document.getElementById('providerApp').style.display = 'flex';
+    document.getElementById('provSidebarUserName').textContent = user;
+    document.getElementById('provSidebarUserRole').textContent = USER_ROLES[user].label;
+    document.getElementById('provSidebarAvatar').textContent = USER_ROLES[user].initials;
+    initProviderPortal();
+    return;
+  }
+
+  document.querySelector('.app').style.display = '';
+  document.getElementById('providerApp').style.display = 'none';
+  document.getElementById('sidebarUserName').textContent = user;
+  document.getElementById('sidebarUserRole').textContent = USER_ROLES[user].label;
+  document.getElementById('sidebarAvatar').textContent = USER_ROLES[user].initials;
+
+  const nombre = USER_ROLES[user].nombreCompleto || user;
+  const primerNombre = nombre.split(' ')[0];
+  document.getElementById('dashGreeting').textContent = saludoSegunHora() + ', ' + primerNombre;
+
+  applyRolePermissions();
+  showLoginNotifications(user);
+}
+function saludoSegunHora(){
+  const h = new Date().getHours();
+  if(h < 12) return 'Buenos días';
+  if(h < 19) return 'Buenas tardes';
+  return 'Buenas noches';
+}
+
+function applyRolePermissions(){
+  // Mostrar/ocultar módulos del sidebar según el rol
+  let firstAllowedBtn = null;
+  document.querySelectorAll('.nav-item[data-view]').forEach(btn=>{
+    const roles = (btn.dataset.roles || '').split(',');
+    const allowed = roles.includes(currentRole);
+    btn.style.display = allowed ? '' : 'none';
+    if(allowed && !firstAllowedBtn) firstAllowedBtn = btn;
+  });
+
+  // Botones de acción que dependen del rol
+  const addBtn = document.getElementById('btnAddEquipo');
+  if(addBtn) addBtn.style.display = (currentRole === 'admin' || currentRole === 'coordinador') ? '' : 'none';
+
+  const solBtn = document.getElementById('btnSolicitarRevision');
+  if(solBtn) solBtn.style.display = (currentRole === 'admin' || currentRole === 'coordinador') ? '' : 'none';
+
+  const solBtnTecnico = document.getElementById('btnSolicitarServicioTecnico');
+  if(solBtnTecnico) solBtnTecnico.style.display = (currentRole === 'tecnico') ? '' : 'none';
+
+  const solTab = document.getElementById('tabSolicitudesBtn');
+  if(solTab) solTab.style.display = (currentRole === 'admin' || currentRole === 'coordinador') ? '' : 'none';
+  const aprobTab = document.getElementById('tabAprobacionesBtn');
+  if(aprobTab) aprobTab.style.display = (currentRole === 'admin' || currentRole === 'coordinador') ? '' : 'none';
+  const misSolTab = document.getElementById('tabMisSolicitudesBtn');
+  if(misSolTab) misSolTab.style.display = (currentRole === 'tecnico') ? '' : 'none';
+  if(currentRole === 'tecnico') switchRevTab('checklist');
+
+  // En el panel principal, el técnico ve las tarjetas de seguimiento (revisiones
+  // pendientes y solicitudes abiertas) y la actividad reciente, pero no el detalle
+  // de clasificación de riesgo ni distribución, que corresponde a coordinación.
+  const dashDetail = document.getElementById('dashDetailGrid');
+  if(dashDetail) dashDetail.style.display = (currentRole === 'tecnico') ? 'none' : '';
+
+  // Para el técnico, el panel solo muestra "Revisiones pendientes hoy" y
+  // "Solicitudes abiertas": es puramente informativo para su seguimiento diario.
+  const kpiEquipos = document.getElementById('kpiEquiposRegistrados');
+  const kpiImp = document.getElementById('kpiIncluidosIMP');
+  const kpiGrid = document.getElementById('dashKpiGrid');
+  const esTecnico = currentRole === 'tecnico';
+  if(kpiEquipos) kpiEquipos.style.display = esTecnico ? 'none' : '';
+  if(kpiImp) kpiImp.style.display = esTecnico ? 'none' : '';
+  if(kpiGrid) kpiGrid.className = esTecnico ? 'grid grid-2' : 'grid grid-4';
+
+  // Forzar una vista permitida para el rol actual
+  const defaultView = DEFAULT_VIEW_BY_ROLE[currentRole] || 'inventario';
+  const activeBtn = document.querySelector('.nav-item[data-view].active');
+  const activeAllowed = activeBtn && activeBtn.style.display !== 'none';
+  if(!activeAllowed){
+    const target = document.querySelector('.nav-item[data-view="'+defaultView+'"]') || firstAllowedBtn;
+    if(target) target.click();
+  }
+}
+
+function logout(){
+  try{ localStorage.removeItem('cleraSession'); }catch(e){}
+  currentUser = null; currentRole = null; loginSelectedUser = null;
+  document.querySelectorAll('.user-opt').forEach(o=>o.classList.remove('selected'));
+  document.getElementById('loginPassword').value = '';
+  document.getElementById('loginError').classList.remove('show');
+  document.getElementById('loginGate').style.display = 'flex';
 }
 
 function checkExistingSession(){
@@ -1772,16 +3938,18 @@ renderInventario();
 renderMantenimiento();
 renderChecklist();
 renderSolicitudes();
+renderAprobaciones();
+renderMisSolicitudes();
 renderCorrectivo();
 renderDashboard();
 updateNavBadges();
 
 // cerrar modales con click en overlay
-[['solicitudModalOverlay',closeSolicitudModal],['geModalOverlay',closeGECalc],['addEquipoOverlay',closeAddEquipoModal]].forEach(([id,fn])=>{
+[['solicitudModalOverlay',closeSolicitudModal],['geModalOverlay',closeGECalc],['addEquipoOverlay',closeAddEquipoModal],['editEquipoOverlay',closeEditEquipoModal],['issueModalOverlay',closeChecklistIssueModal],['provOrderModalOverlay',closeProviderOrderModal],['hospOrderModalOverlay',closeHospOrderModal],['solicitudServicioModalOverlay',closeSolicitudServicioModal]].forEach(([id,fn])=>{
   document.getElementById(id).addEventListener('click', (ev)=>{ if(ev.target.id===id) fn(); });
 });
 document.addEventListener('keydown', (ev)=>{
-  if(ev.key==='Escape'){ closeDrawer(); closeSolicitudModal(); closeGECalc(); closeAddEquipoModal(); }
+  if(ev.key==='Escape'){ closeDrawer(); closeSolicitudModal(); closeGECalc(); closeAddEquipoModal(); closeEditEquipoModal(); closeChecklistIssueModal(); closeProviderOrderModal(); closeHospOrderModal(); closeSolicitudServicioModal(); }
 });
 </script>
 </body>
