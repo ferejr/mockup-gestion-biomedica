@@ -705,7 +705,7 @@
   </div>
 </div>
 
-<!-- ============ PORTAL DE PROVEEDOR (CLÉRA) ============ -->
+<!-- ============ PORTAL DE PROVEEDOR (SIMPLICAI) ============ -->
 <div id="providerApp">
   <aside class="sidebar">
     <div class="brand">
@@ -1370,6 +1370,18 @@
 
 <div class="toast-stack" id="toastStack"></div>
 
-<script src="js/app.js"></script>
+<!-- Orden de carga importante: sin módulos reales, cada archivo depende de que los
+     anteriores ya hayan declarado sus variables/funciones globales. data.js y helpers.js
+     van primero; shell.js al final porque dispara el render inicial. Ver README.md. -->
+<script src="js/data.js"></script>
+<script src="js/helpers.js"></script>
+<script src="js/inventario.js"></script>
+<script src="js/mantenimiento.js"></script>
+<script src="js/revisiones.js"></script>
+<script src="js/correctivo.js"></script>
+<script src="js/equipos.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/provider.js"></script>
+<script src="js/shell.js"></script>
 </body>
 </html>
