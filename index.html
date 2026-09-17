@@ -235,12 +235,15 @@
       </div>
     </div>
 
-    <div class="nav-group-label">General</div>
     <div class="nav">
       <button class="nav-item active" data-view="dashboard" data-roles="admin,coordinador,tecnico">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
         Panel General
       </button>
+    </div>
+
+    <div class="nav-group-label">Operación</div>
+    <div class="nav">
       <button class="nav-item" data-view="inventario" data-roles="admin,coordinador,tecnico">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>
         Inventario
@@ -250,10 +253,6 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14.7 6.3a4 4 0 10-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 005.4-5.4l-2.6 2.6-2-2 2.6-2.6z"/></svg>
         Programa de Mantenimiento
       </button>
-    </div>
-
-    <div class="nav-group-label">Operación diaria</div>
-    <div class="nav">
       <button class="nav-item" data-view="revisiones" data-roles="admin,coordinador,tecnico">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M9 3v2a1 1 0 001 1h4a1 1 0 001-1V3"/><path d="M8.5 12.5l2 2 4.5-4.5"/></svg>
         Revisiones Diarias
@@ -263,10 +262,6 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10.5 3.5l10 10-3.5 3.5-10-10a2.5 2.5 0 013.5-3.5z"/><path d="M3 21l4.5-1.5L3 15.5V21z"/><path d="M13 6l5 5"/></svg>
         Órdenes de Mantenimiento
         <span class="nav-badge urgent" id="navBadgeCorr">0</span>
-      </button>
-      <button class="nav-item" data-view="indicadores" data-roles="admin,coordinador">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19V9m6 10V4m6 15v-7"/></svg>
-        Indicadores
       </button>
     </div>
 
@@ -303,7 +298,7 @@
 
     <div class="content">
 
-      <!-- ============ DASHBOARD ============ -->
+      <!-- ============ DASHBOARD (Resumen + Indicadores) ============ -->
       <section class="view active" id="view-dashboard">
         <div class="view-head">
           <div>
@@ -312,6 +307,12 @@
           </div>
         </div>
 
+        <div class="tabs">
+          <button class="tab-btn active" data-dtab="resumen" onclick="switchDashboardTab('resumen')">Resumen</button>
+          <button class="tab-btn" data-dtab="indicadores" id="dashTabIndicadoresBtn" onclick="switchDashboardTab('indicadores')">Indicadores</button>
+        </div>
+
+        <div class="tab-pane active" id="dtab-resumen">
         <div class="grid grid-4" id="dashKpiGrid" style="margin-bottom:18px;">
           <div class="card kpi" id="kpiEquiposRegistrados">
             <div class="kpi-label">Equipos registrados <span class="kpi-dot" style="background:var(--teal-600)"></span></div>
@@ -352,6 +353,86 @@
           <div class="section-title">Actividad reciente</div>
           <div class="section-sub">Últimos movimientos en revisiones y solicitudes.</div>
           <div id="dashActividad" class="timeline"></div>
+        </div>
+        </div>
+
+        <div class="tab-pane" id="dtab-indicadores">
+        <div class="grid grid-3" style="margin-bottom:18px;">
+          <div class="card kpi">
+            <div class="kpi-label">Cumplimiento de IMP asignado</div>
+            <div class="kpi-value" id="kpiCumplimiento">—</div>
+            <div class="kpi-sub">Checklists completados hoy sobre el total programado</div>
+          </div>
+          <div class="card kpi">
+            <div class="kpi-label">Tasa de localización de equipos</div>
+            <div class="kpi-value">96%</div>
+            <div class="kpi-sub">Dato ilustrativo · último censo de inventario</div>
+          </div>
+          <div class="card kpi">
+            <div class="kpi-label">Tiempo promedio de respuesta</div>
+            <div class="kpi-value">3.2h</div>
+            <div class="kpi-sub">Dato ilustrativo · órdenes de mantenimiento urgentes</div>
+          </div>
+        </div>
+
+        <div class="grid grid-3" style="margin-bottom:18px;">
+          <div class="card kpi">
+            <div class="kpi-label">Preventivo vs Correctivo <span class="kpi-dot" style="background:var(--teal-600)"></span></div>
+            <div class="kpi-value" id="kpiRatioPrevCorr" style="font-size:22px;">—</div>
+            <div class="kpi-sub">Proporción de eventos de mantenimiento realizados, según su tipo</div>
+          </div>
+          <div class="card kpi">
+            <div class="kpi-label">Costo en mantenimiento <span class="kpi-dot" style="background:var(--clay-600)"></span></div>
+            <div class="kpi-value" id="kpiCostoTotal" style="font-size:22px;">—</div>
+            <div class="kpi-sub">Suma de costos estimados capturados por el proveedor</div>
+          </div>
+          <div class="card kpi">
+            <div class="kpi-label">Inactividad promedio por orden <span class="kpi-dot" style="background:var(--amber-600)"></span></div>
+            <div class="kpi-value" id="kpiPromInactividad" style="font-size:22px;">—</div>
+            <div class="kpi-sub">Días entre que se reporta y se cierra una orden</div>
+          </div>
+        </div>
+
+        <div class="grid" style="grid-template-columns:1fr 1fr; margin-bottom:18px;">
+          <div class="card card-pad">
+            <div class="section-title">Preventivo vs Correctivo</div>
+            <div class="section-sub">Menos correctivo y más preventivo significa menos averías inesperadas y menor costo — es el indicador clave para evitar el mantenimiento reactivo.</div>
+            <div id="indRatioBar"></div>
+          </div>
+          <div class="card card-pad">
+            <div class="section-title">Días de inactividad por equipo</div>
+            <div class="section-sub">Equipos con más días acumulados fuera de operación (suma de todas sus órdenes cerradas).</div>
+            <div id="indInactividadList"></div>
+          </div>
+        </div>
+
+        <div class="card card-pad" style="margin-bottom:18px;">
+          <div class="section-title">Costo de mantenimiento por categoría</div>
+          <div class="section-sub">Costos estimados capturados por el proveedor al resolver cada orden.</div>
+          <div id="indCostoDetalle"></div>
+        </div>
+
+        <div class="grid" style="grid-template-columns:1fr 1fr;">
+          <div class="card card-pad">
+            <div class="section-title">Productividad de IMP por área</div>
+            <div class="section-sub">Porcentaje de inspecciones preventivas completadas en el mes (dato ilustrativo).</div>
+            <div class="bar-row"><div class="bar-label">Quirófano</div><div class="bar-track"><div class="bar-fill" style="width:92%"></div></div><div class="bar-value">92%</div></div>
+            <div class="bar-row"><div class="bar-label">UCI</div><div class="bar-track"><div class="bar-fill" style="width:88%"></div></div><div class="bar-value">88%</div></div>
+            <div class="bar-row"><div class="bar-label">Urgencias</div><div class="bar-track"><div class="bar-fill" style="width:76%"></div></div><div class="bar-value">76%</div></div>
+            <div class="bar-row"><div class="bar-label">Tococirugía</div><div class="bar-track"><div class="bar-fill" style="width:81%"></div></div><div class="bar-value">81%</div></div>
+            <div class="bar-row"><div class="bar-label">Endoscopía</div><div class="bar-track"><div class="bar-fill" style="width:69%"></div></div><div class="bar-value">69%</div></div>
+            <div class="scope-note">Estas barras son ilustrativas para el mockup; en producción se calcularían a partir del historial real de IMP por área.</div>
+          </div>
+          <div class="card card-pad">
+            <div class="section-title">Órdenes de mantenimiento por categoría</div>
+            <div class="section-sub">Distribución de órdenes abiertas en los últimos 30 días (dato ilustrativo).</div>
+            <div class="bar-row"><div class="bar-label">Urgente emergencia</div><div class="bar-track"><div class="bar-fill" style="width:18%; background:var(--red-700)"></div></div><div class="bar-value">18%</div></div>
+            <div class="bar-row"><div class="bar-label">Urgente</div><div class="bar-track"><div class="bar-fill" style="width:34%; background:var(--amber-600)"></div></div><div class="bar-value">34%</div></div>
+            <div class="bar-row"><div class="bar-label">Regular</div><div class="bar-track"><div class="bar-fill" style="width:40%; background:var(--green-600)"></div></div><div class="bar-value">40%</div></div>
+            <div class="bar-row"><div class="bar-label">Pospuesta</div><div class="bar-track"><div class="bar-fill" style="width:8%; background:var(--muted)"></div></div><div class="bar-value">8%</div></div>
+            <div class="scope-note">Los indicadores de cumplimiento de IMP y solicitudes abiertas sí se calculan en vivo a partir de tus checklists y solicitudes en este mockup.</div>
+          </div>
+        </div>
         </div>
       </section>
 
@@ -610,93 +691,6 @@
               </thead>
               <tbody id="correctivoBody"></tbody>
             </table>
-          </div>
-        </div>
-      </section>
-
-      <!-- ============ INDICADORES ============ -->
-      <section class="view" id="view-indicadores">
-        <div class="view-head">
-          <div>
-            <h2>Indicadores de Desempeño</h2>
-            <div class="view-desc">Seguimiento del programa de mantenimiento, según los indicadores de gestión operativa.</div>
-          </div>
-        </div>
-
-        <div class="grid grid-3" style="margin-bottom:18px;">
-          <div class="card kpi">
-            <div class="kpi-label">Cumplimiento de IMP asignado</div>
-            <div class="kpi-value" id="kpiCumplimiento">—</div>
-            <div class="kpi-sub">Checklists completados hoy sobre el total programado</div>
-          </div>
-          <div class="card kpi">
-            <div class="kpi-label">Tasa de localización de equipos</div>
-            <div class="kpi-value">96%</div>
-            <div class="kpi-sub">Dato ilustrativo · último censo de inventario</div>
-          </div>
-          <div class="card kpi">
-            <div class="kpi-label">Tiempo promedio de respuesta</div>
-            <div class="kpi-value">3.2h</div>
-            <div class="kpi-sub">Dato ilustrativo · órdenes de mantenimiento urgentes</div>
-          </div>
-        </div>
-
-        <div class="grid grid-3" style="margin-bottom:18px;">
-          <div class="card kpi">
-            <div class="kpi-label">Preventivo vs Correctivo <span class="kpi-dot" style="background:var(--teal-600)"></span></div>
-            <div class="kpi-value" id="kpiRatioPrevCorr" style="font-size:22px;">—</div>
-            <div class="kpi-sub">Proporción de eventos de mantenimiento realizados, según su tipo</div>
-          </div>
-          <div class="card kpi">
-            <div class="kpi-label">Costo en mantenimiento <span class="kpi-dot" style="background:var(--clay-600)"></span></div>
-            <div class="kpi-value" id="kpiCostoTotal" style="font-size:22px;">—</div>
-            <div class="kpi-sub">Suma de costos estimados capturados por el proveedor</div>
-          </div>
-          <div class="card kpi">
-            <div class="kpi-label">Inactividad promedio por orden <span class="kpi-dot" style="background:var(--amber-600)"></span></div>
-            <div class="kpi-value" id="kpiPromInactividad" style="font-size:22px;">—</div>
-            <div class="kpi-sub">Días entre que se reporta y se cierra una orden</div>
-          </div>
-        </div>
-
-        <div class="grid" style="grid-template-columns:1fr 1fr; margin-bottom:18px;">
-          <div class="card card-pad">
-            <div class="section-title">Preventivo vs Correctivo</div>
-            <div class="section-sub">Menos correctivo y más preventivo significa menos averías inesperadas y menor costo — es el indicador clave para evitar el mantenimiento reactivo.</div>
-            <div id="indRatioBar"></div>
-          </div>
-          <div class="card card-pad">
-            <div class="section-title">Días de inactividad por equipo</div>
-            <div class="section-sub">Equipos con más días acumulados fuera de operación (suma de todas sus órdenes cerradas).</div>
-            <div id="indInactividadList"></div>
-          </div>
-        </div>
-
-        <div class="card card-pad" style="margin-bottom:18px;">
-          <div class="section-title">Costo de mantenimiento por categoría</div>
-          <div class="section-sub">Costos estimados capturados por el proveedor al resolver cada orden.</div>
-          <div id="indCostoDetalle"></div>
-        </div>
-
-        <div class="grid" style="grid-template-columns:1fr 1fr;">
-          <div class="card card-pad">
-            <div class="section-title">Productividad de IMP por área</div>
-            <div class="section-sub">Porcentaje de inspecciones preventivas completadas en el mes (dato ilustrativo).</div>
-            <div class="bar-row"><div class="bar-label">Quirófano</div><div class="bar-track"><div class="bar-fill" style="width:92%"></div></div><div class="bar-value">92%</div></div>
-            <div class="bar-row"><div class="bar-label">UCI</div><div class="bar-track"><div class="bar-fill" style="width:88%"></div></div><div class="bar-value">88%</div></div>
-            <div class="bar-row"><div class="bar-label">Urgencias</div><div class="bar-track"><div class="bar-fill" style="width:76%"></div></div><div class="bar-value">76%</div></div>
-            <div class="bar-row"><div class="bar-label">Tococirugía</div><div class="bar-track"><div class="bar-fill" style="width:81%"></div></div><div class="bar-value">81%</div></div>
-            <div class="bar-row"><div class="bar-label">Endoscopía</div><div class="bar-track"><div class="bar-fill" style="width:69%"></div></div><div class="bar-value">69%</div></div>
-            <div class="scope-note">Estas barras son ilustrativas para el mockup; en producción se calcularían a partir del historial real de IMP por área.</div>
-          </div>
-          <div class="card card-pad">
-            <div class="section-title">Órdenes de mantenimiento por categoría</div>
-            <div class="section-sub">Distribución de órdenes abiertas en los últimos 30 días (dato ilustrativo).</div>
-            <div class="bar-row"><div class="bar-label">Urgente emergencia</div><div class="bar-track"><div class="bar-fill" style="width:18%; background:var(--red-700)"></div></div><div class="bar-value">18%</div></div>
-            <div class="bar-row"><div class="bar-label">Urgente</div><div class="bar-track"><div class="bar-fill" style="width:34%; background:var(--amber-600)"></div></div><div class="bar-value">34%</div></div>
-            <div class="bar-row"><div class="bar-label">Regular</div><div class="bar-track"><div class="bar-fill" style="width:40%; background:var(--green-600)"></div></div><div class="bar-value">40%</div></div>
-            <div class="bar-row"><div class="bar-label">Pospuesta</div><div class="bar-track"><div class="bar-fill" style="width:8%; background:var(--muted)"></div></div><div class="bar-value">8%</div></div>
-            <div class="scope-note">Los indicadores de cumplimiento de IMP y solicitudes abiertas sí se calculan en vivo a partir de tus checklists y solicitudes en este mockup.</div>
           </div>
         </div>
       </section>

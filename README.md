@@ -62,12 +62,11 @@ que inicia sesión (ver [Roles y usuarios de prueba](#roles-y-usuarios-de-prueba
 
 | Vista | id | Descripción |
 |---|---|---|
-| Panel General | `view-dashboard` | KPIs (equipos registrados, incluidos en el programa de mantenimiento preventivo, revisiones pendientes, solicitudes abiertas), equipos críticos, distribución por clasificación de riesgo GE, actividad reciente. |
-| Inventario | `view-inventario` | Tabla filtrable/buscable de equipos; alta de equipo; acceso al detalle (drawer). |
-| Programa de Mantenimiento | `view-mantenimiento` | Tabla de clasificación de riesgo (Número GE), calendario de mantenimiento preventivo navegable mes a mes. |
-| Revisiones Diarias | `view-revisiones` | Checklists diarios/semanales por equipo, solicitudes de revisión, cola de aprobaciones (coordinador/admin), seguimiento de solicitudes propias (técnico). |
-| Órdenes de Mantenimiento | `view-correctivo` | Órdenes correctivas con niveles de urgencia, flujo de doble validación (proveedor resuelve → hospital confirma y cierra). |
-| Indicadores | `view-indicadores` | Cumplimiento de programa preventivo, tiempos de respuesta, costos, preventivo vs. correctivo. Varios paneles están marcados explícitamente en el código como **datos ilustrativos**, no calculados en tiempo real (ver [Qué es simulado](#qué-es-simulado-vs-lógica-real)). |
+| Panel General | `view-dashboard` | Pantalla de inicio, fuera de cualquier grupo del menú. Tiene 2 pestañas: **Resumen** (KPIs de equipos registrados, incluidos en el programa de mantenimiento preventivo, revisiones pendientes, solicitudes abiertas, equipos críticos, distribución por clasificación de riesgo GE, actividad reciente) e **Indicadores** (cumplimiento de programa preventivo, tiempos de respuesta, costos, preventivo vs. correctivo — visible solo para admin/coordinador, igual que antes cuando era una vista aparte). Varios paneles de la pestaña Indicadores están marcados explícitamente en el código como **datos ilustrativos**, no calculados en tiempo real (ver [Qué es simulado](#qué-es-simulado-vs-lógica-real)). |
+| Inventario | `view-inventario` | Tabla filtrable/buscable de equipos; alta de equipo; acceso al detalle (drawer). Agrupada bajo "Operación" en el menú. |
+| Programa de Mantenimiento | `view-mantenimiento` | Tabla de clasificación de riesgo (Número GE), calendario de mantenimiento preventivo navegable mes a mes. Agrupada bajo "Operación". |
+| Revisiones Diarias | `view-revisiones` | Checklists diarios/semanales por equipo, solicitudes de revisión, cola de aprobaciones (coordinador/admin), seguimiento de solicitudes propias (técnico). Agrupada bajo "Operación". |
+| Órdenes de Mantenimiento | `view-correctivo` | Órdenes correctivas con niveles de urgencia, flujo de doble validación (proveedor resuelve → hospital confirma y cierra). Agrupada bajo "Operación". |
 
 ### Portal de proveedor (`#providerApp`, secciones `id="pview-*"`)
 
