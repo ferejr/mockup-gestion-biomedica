@@ -1,7 +1,7 @@
 /* ===================== NAVIGATION ===================== */
 const viewTitles = {
   dashboard:"Panel General", inventario:"Inventario de Equipos", mantenimiento:"Programa de Mantenimiento",
-  revisiones:"Revisiones Diarias", correctivo:"Órdenes de Mantenimiento", indicadores:"Indicadores de Desempeño"
+  revisiones:"Revisiones Diarias", correctivo:"Órdenes de Mantenimiento"
 };
 document.querySelectorAll('.nav-item[data-view]').forEach(btn=>{
   btn.addEventListener('click', ()=>{
@@ -127,6 +127,12 @@ function applyRolePermissions(){
   const misSolTab = document.getElementById('tabMisSolicitudesBtn');
   if(misSolTab) misSolTab.style.display = (currentRole === 'tecnico') ? '' : 'none';
   if(currentRole === 'tecnico') switchRevTab('checklist');
+
+  // La pestaña "Indicadores" de Panel General mantiene la misma restricción que tenía
+  // como vista aparte: solo admin/coordinador, no técnico.
+  const dashIndTab = document.getElementById('dashTabIndicadoresBtn');
+  if(dashIndTab) dashIndTab.style.display = (currentRole === 'admin' || currentRole === 'coordinador') ? '' : 'none';
+  if(currentRole === 'tecnico') switchDashboardTab('resumen');
 
   // En el panel principal, el técnico ve las tarjetas de seguimiento (revisiones
   // pendientes y solicitudes abiertas) y la actividad reciente, pero no el detalle

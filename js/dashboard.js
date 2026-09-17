@@ -1,4 +1,13 @@
 /* ===================== DASHBOARD ===================== */
+// Panel General y lo que antes era la vista aparte "Indicadores" viven ahora en una sola
+// pantalla, como 2 pestañas (mismo patrón que switchEquipoTab en mantenimiento.js). El
+// cálculo de cada pestaña no cambió: renderDashboard() sigue llamando a
+// renderIndicadoresExtra() más abajo, solo cambió dónde se muestra el resultado.
+function switchDashboardTab(tab){
+  document.querySelectorAll('[data-dtab]').forEach(b=>b.classList.toggle('active', b.dataset.dtab===tab));
+  document.querySelectorAll('#view-dashboard .tab-pane').forEach(p=>p.classList.remove('active'));
+  document.getElementById('dtab-'+tab).classList.add('active');
+}
 function renderDashboard(){
   const pendientes = Object.keys(checklists).length - Object.values(checklists).filter(c=>c.guardadoHoy).length;
   document.getElementById('dashPendientes').textContent = pendientes;
