@@ -37,6 +37,8 @@ se reinician al recargar la página, excepto la sesión de usuario, que se guard
 │   ├── dashboard.js        Panel General e Indicadores.
 │   ├── provider.js         Portal de Proveedor completo (hospitales, órdenes, técnicos).
 │   ├── topbar.js           Centro de notificaciones de la barra superior (la campana).
+│   ├── paleta.js           Paleta de comandos (Ctrl K): navegación, acciones y búsqueda
+│   │                      global, en las dos aplicaciones.
 │   └── shell.js            Navegación, login/roles, e inicialización — se carga al final.
 ├── legacy/
 │   └── mockup-gestion-equipos-medicos.html

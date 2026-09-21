@@ -287,6 +287,11 @@
         <div class="topbar-eyebrow">Hospital General del Valle · ZMG</div>
         <h1 id="topbarTitle">Panel General</h1>
       </div>
+      <button class="cmdk-trigger" onclick="abrirPaleta()" title="Buscar en toda la plataforma (Ctrl K)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+        <span>Buscar o ir a…</span>
+        <kbd>Ctrl K</kbd>
+      </button>
       <div class="notif-wrap">
         <button class="icon-btn" id="notifBtn" title="Notificaciones" onclick="toggleNotificaciones()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg>
@@ -755,6 +760,11 @@
         <div class="topbar-eyebrow">SimplicAI · Gestión de clientes</div>
         <h1 id="provTopbarTitle">Panel General</h1>
       </div>
+      <button class="cmdk-trigger" style="margin-left:auto;" onclick="abrirPaleta()" title="Buscar en toda la plataforma (Ctrl K)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+        <span>Buscar o ir a…</span>
+        <kbd>Ctrl K</kbd>
+      </button>
     </div>
 
     <div class="content">
@@ -1456,6 +1466,25 @@
   </div>
 </div>
 
+<!-- ============ PALETA DE COMANDOS (Ctrl K) ============ -->
+<div class="paleta-overlay" id="paletaOverlay" onclick="if(event.target===this) cerrarPaleta()">
+  <div class="paleta">
+    <div class="paleta-input-row">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+      <input id="paletaInput" type="text" autocomplete="off" spellcheck="false"
+             placeholder="Busca un equipo, folio o módulo… o escribe para ir a algún lado"
+             oninput="paletaIndice = 0; renderPaleta();">
+      <kbd>esc</kbd>
+    </div>
+    <div class="paleta-resultados" id="paletaResultados"></div>
+    <div class="paleta-foot">
+      <span><kbd>↑</kbd><kbd>↓</kbd> navegar</span>
+      <span><kbd>↵</kbd> abrir</span>
+      <span><kbd>esc</kbd> cerrar</span>
+    </div>
+  </div>
+</div>
+
 <div class="toast-stack" id="toastStack"></div>
 
 <!-- Orden de carga importante: sin módulos reales, cada archivo depende de que los
@@ -1471,6 +1500,7 @@
 <script src="js/dashboard.js"></script>
 <script src="js/provider.js"></script>
 <script src="js/topbar.js"></script>
+<script src="js/paleta.js"></script>
 <script src="js/shell.js"></script>
 </body>
 </html>
