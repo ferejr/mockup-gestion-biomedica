@@ -155,5 +155,8 @@ function updateNavBadges(){
   const badgeCorr = document.getElementById('navBadgeCorr');
   badgeCorr.textContent = corrAbiertas;
   badgeCorr.style.display = corrAbiertas>0 ? '' : 'none';
+  // El contador de la campana se recalcula aquí porque updateNavBadges() ya se llama
+  // después de toda mutación de datos.
+  renderNotificaciones();
 }
 

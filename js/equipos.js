@@ -64,9 +64,49 @@ function saveGEResult(){
   showToast('Clasificación GE actualizada para ' + e.nombre);
 }
 
+/* ===================== LISTAS EDITABLES (accesorios y manuales) =====================
+   Pequeño componente compartido por los formularios de alta y de edición: mantiene una
+   lista de textos que se agregan y quitan de a uno, en vez de un campo libre separado
+   por comas. `listasEquipoForm` guarda el estado mientras el modal está abierto. */
+const listasEquipoForm = {newAccesorios:[], newManuales:[], editAccesorios:[], editManuales:[]};
+
+function renderListaEditable(key){
+  const cont = document.getElementById(key + 'List');
+  if(!cont) return;
+  const items = listasEquipoForm[key];
+  cont.innerHTML = items.length
+    ? items.map((txt, i)=>`
+        <span class="chip">${txt}
+          <button type="button" class="chip-x" title="Quitar" onclick="quitarItemLista('${key}', ${i})">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg>
+          </button>
+        </span>`).join('')
+    : '<span class="chip-empty">Sin elementos registrados</span>';
+}
+function agregarItemLista(key){
+  const input = document.getElementById(key + 'Input');
+  if(!input) return;
+  const txt = input.value.trim();
+  if(!txt) return;
+  listasEquipoForm[key].push(txt);
+  input.value = '';
+  renderListaEditable(key);
+}
+function quitarItemLista(key, idx){
+  listasEquipoForm[key].splice(idx, 1);
+  renderListaEditable(key);
+}
+
 /* ===================== AGREGAR EQUIPO ===================== */
 function openAddEquipoModal(){
-  ['newNombre','newMarca','newSerie','newUbicacion','newProveedor'].forEach(id=>document.getElementById(id).value='');
+  ['newNombre','newMarca','newSerie','newUbicacion','newProveedor','newGarantia','newVidaUtil'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.value = '';
+  });
+  listasEquipoForm.newAccesorios = [];
+  listasEquipoForm.newManuales = [];
+  renderListaEditable('newAccesorios');
+  renderListaEditable('newManuales');
   document.getElementById('addEquipoOverlay').classList.add('active');
 }
 function closeAddEquipoModal(){ document.getElementById('addEquipoOverlay').classList.remove('active'); }
@@ -83,12 +123,17 @@ function saveNewEquipo(){
     area: document.getElementById('newUbicacion').value.trim() || 'Sin asignar',
     categoria: document.getElementById('newCategoria').value,
     estado: 'Operativo',
-    adquisicion: hoy, instalacion: hoy, fechaAlta: hoy, vidaUtilAnios: 8,
+    adquisicion: hoy, instalacion: hoy, fechaAlta: hoy,
+    // Sin dato capturado se queda vacío: vidaUtilLabel() ya muestra "Sin registrar".
+    vidaUtilAnios: parseInt(document.getElementById('newVidaUtil').value, 10) || null,
     proveedor: document.getElementById('newProveedor').value.trim() || '—',
     proveedorServicio: 'SimplicAI — Gestión integral (contrato vigente)',
     tipoRiesgo: 'Por definir',
     ge:{funcion:2, aplicacion:1, mantenimiento:1, antecedentes:0},
-    accesorios:[], manuales:[], garantia:'Sin registrar.', historial:[]
+    accesorios: listasEquipoForm.newAccesorios.slice(),
+    manuales: listasEquipoForm.newManuales.slice(),
+    garantia: document.getElementById('newGarantia').value.trim() || 'Sin registrar.',
+    historial:[]
   };
   equipos.push(nuevo);
   if(esEquipoMedico(nuevo)){
@@ -115,6 +160,12 @@ function openEditEquipoModal(){
   document.getElementById('editCategoria').value = e.categoria;
   document.getElementById('editProveedor').value = e.proveedor;
   document.getElementById('editEstado').value = e.estado;
+  document.getElementById('editGarantia').value = (e.garantia && e.garantia !== 'Sin registrar.') ? e.garantia : '';
+  document.getElementById('editVidaUtil').value = e.vidaUtilAnios || '';
+  listasEquipoForm.editAccesorios = (e.accesorios || []).slice();
+  listasEquipoForm.editManuales = (e.manuales || []).slice();
+  renderListaEditable('editAccesorios');
+  renderListaEditable('editManuales');
   document.getElementById('editEquipoOverlay').classList.add('active');
 }
 function closeEditEquipoModal(){ document.getElementById('editEquipoOverlay').classList.remove('active'); }
@@ -130,6 +181,10 @@ function saveEditEquipo(){
   e.categoria = document.getElementById('editCategoria').value;
   e.proveedor = document.getElementById('editProveedor').value.trim() || '—';
   e.estado = document.getElementById('editEstado').value;
+  e.garantia = document.getElementById('editGarantia').value.trim() || 'Sin registrar.';
+  e.vidaUtilAnios = parseInt(document.getElementById('editVidaUtil').value, 10) || null;
+  e.accesorios = listasEquipoForm.editAccesorios.slice();
+  e.manuales = listasEquipoForm.editManuales.slice();
 
   // Si cambió de/hacia TI/Activo, sincroniza si tiene o no checklist de rutina.
   if(esEquipoMedico(e) && !checklists[e.id]){

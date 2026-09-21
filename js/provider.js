@@ -223,6 +223,7 @@ function saveNewHospital(){
     contratoValor: document.getElementById('newHospValor').value.trim() || 'Por definir',
     inicioServicio: document.getElementById('newHospInicio').value || new Date().toISOString().slice(0,10),
     contratoRenovacion: document.getElementById('newHospRenovacion').value || '',
+    diasAnticipacionIMP: parseInt(document.getElementById('newHospDiasIMP').value, 10) || DIAS_ANTICIPACION_IMP_DEFAULT,
     equiposResumen: [],
     ordenesResumen: []
   };
@@ -292,7 +293,26 @@ function renderHospitalInfoTab(h){
     <div class="kv-item"><div class="k">Inicio del servicio</div><div class="v">${fmtDate(h.inicioServicio)}</div></div>
     <div class="kv-item"><div class="k">Valor del contrato</div><div class="v">${h.contratoValor || '—'}</div></div>
     <div class="kv-item"><div class="k">Próxima renovación</div><div class="v">${h.contratoRenovacion ? fmtDate(h.contratoRenovacion) : '—'} · ${contratoPill(h)}</div></div>
+    <div class="kv-item">
+      <div class="k">Anticipación de órdenes IMP</div>
+      <div class="v" style="display:flex; align-items:center; gap:8px;">
+        <input class="input" type="number" min="0" max="180" style="width:80px; padding:4px 8px;"
+               id="hospDiasIMP" value="${typeof h.diasAnticipacionIMP === 'number' ? h.diasAnticipacionIMP : DIAS_ANTICIPACION_IMP_DEFAULT}"
+               onchange="guardarDiasAnticipacionIMP('${h.id}', this.value)">
+        <span style="font-size:12.5px; color:var(--muted); font-weight:400;">días antes del preventivo</span>
+      </div>
+    </div>
   `;
+}
+
+// Ajusta la ventana con la que se abren solas las órdenes "IMP programado" de este hospital.
+function guardarDiasAnticipacionIMP(hospId, valor){
+  const h = hospitalById(hospId);
+  if(!h) return;
+  const dias = parseInt(valor, 10);
+  if(isNaN(dias) || dias < 0){ showToast('Indica un número de días válido', 'warning'); return; }
+  h.diasAnticipacionIMP = dias;
+  showToast('Anticipación de órdenes IMP: ' + dias + ' días', 'success');
 }
 
 function renderHospitalEquiposTab(h){
@@ -346,6 +366,7 @@ function renderProviderOrdenesGlobal(){
   const badge = document.getElementById('provNavBadgeOrdenes');
   if(badge){ badge.textContent = abiertas; badge.style.display = abiertas>0 ? '' : 'none'; }
 
+  // Los contadores reflejan el total que le corresponde al rol, sin aplicar la búsqueda.
   document.getElementById('provOrdEmerg').textContent = ords.filter(o=>o.categoria==='Urgente emergencia' && o.estado!=='Cerrada').length;
   document.getElementById('provOrdUrg').textContent = ords.filter(o=>o.categoria==='Urgente' && o.estado!=='Cerrada').length;
   document.getElementById('provOrdReg').textContent = ords.filter(o=>o.categoria==='Regular' && o.estado!=='Cerrada').length;
@@ -355,6 +376,27 @@ function renderProviderOrdenesGlobal(){
     body.innerHTML = `<tr><td colspan="8"><div class="empty-state">${currentRole==='tecnico_proveedor' ? 'No tienes órdenes asignadas por el momento.' : 'Sin órdenes de servicio registradas todavía.'}</div></td></tr>`;
     return;
   }
+
+  // Búsqueda por texto, aplicada sobre lo que el rol ya podía ver.
+  const buscarEl = document.getElementById('provOrdBuscar');
+  const q = buscarEl ? buscarEl.value.trim().toLowerCase() : '';
+  if(q){
+    ords = ords.filter(o=>{
+      const h = hospitalById(o.hospId);
+      return o.folio.toLowerCase().includes(q)
+        || (h && h.nombre.toLowerCase().includes(q))
+        || (o.equipoNombre || '').toLowerCase().includes(q)
+        || (o.tecnico || '').toLowerCase().includes(q);
+    });
+  }
+  if(ords.length === 0){
+    body.innerHTML = `<tr><td colspan="8"><div class="empty-state">
+      <div class="t">Sin coincidencias</div>
+      <div>Ninguna orden de servicio coincide con la búsqueda.</div>
+    </div></td></tr>`;
+    return;
+  }
+
   body.innerHTML = ords.map(o=>{
     const h = hospitalById(o.hospId);
     return `

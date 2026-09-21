@@ -205,7 +205,10 @@ let hospitales = [
     contacto:"M. Gutiérrez — Coordinación Biomédica", telefono:"33 1234 5678",
     contrato:"Gestión integral (preventivo + correctivo)", inicioServicio:"2024-02-01",
     contratoValor:"$68,000 MXN / mes", contratoRenovacion:"2027-02-01",
-    modeloServicio:"Autogestionado"
+    modeloServicio:"Autogestionado",
+    // Días de anticipación con que se abren solas las órdenes "IMP programado"
+    // antes de la fecha objetivo del preventivo. Configurable por hospital.
+    diasAnticipacionIMP:30
   },
   {
     id:"HOSP-2", nombre:"Clínica Santa Fe", esReal:false,
@@ -213,7 +216,7 @@ let hospitales = [
     contacto:"Dr. Raúl Beltrán — Dirección Médica", telefono:"33 2233 4455",
     contrato:"Mantenimiento preventivo trimestral", inicioServicio:"2025-05-14",
     contratoValor:"$22,500 MXN / mes", contratoRenovacion:"2026-10-15",
-    modeloServicio:"Gestionado por SimplicAI",
+    modeloServicio:"Gestionado por SimplicAI", diasAnticipacionIMP:15,
     equiposResumen:[
       {id:"HOSP2-EQ1", nombre:"Incubadora neonatal", marca:"Dräger Caleo", area:"Neonatología", estado:"Operativo", serie:"DR-2022-1145"},
       {id:"HOSP2-EQ2", nombre:"Ventilador de transporte", marca:"Hamilton T1", area:"Urgencias", estado:"Operativo", serie:"HM-2021-3390"},
@@ -239,7 +242,7 @@ let hospitales = [
     contacto:"Ing. Patricia Loza — Ingeniería Biomédica", telefono:"33 5566 7788",
     contrato:"Servicio por tiempo y material", inicioServicio:"2025-11-02",
     contratoValor:"Por evento (tarifa + refacciones)", contratoRenovacion:"2027-03-01",
-    modeloServicio:"Autogestionado",
+    modeloServicio:"Autogestionado", diasAnticipacionIMP:30,
     equiposResumen:[
       {id:"HOSP3-EQ1", nombre:"Rayos X portátil", marca:"GE AMX 240", area:"Urgencias", estado:"Operativo", serie:"GE-2018-5521"},
       {id:"HOSP3-EQ2", nombre:"Autoclave de vapor", marca:"Tuttnauer 3870", area:"CEyE", estado:"Operativo", serie:"TT-2020-2290"},

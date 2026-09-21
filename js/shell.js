@@ -91,6 +91,8 @@ function grantAccess(user){
   document.getElementById('dashGreeting').textContent = saludoSegunHora() + ', ' + primerNombre;
 
   applyRolePermissions();
+  // El contenido de la campana depende del rol, así que se arma ya con la sesión iniciada.
+  renderNotificaciones();
   showLoginNotifications(user);
 }
 function saludoSegunHora(){
@@ -183,6 +185,9 @@ checkExistingSession();
 
 /* ===================== INIT ===================== */
 initChecklists();
+// Abre las órdenes del programa preventivo que ya entraron en su ventana de anticipación.
+// En el producto real esto lo hace un job del backend, no la carga de la app.
+generarOrdenesIMPProgramado();
 populateAreaFilter();
 renderInventario();
 renderMantenimiento();
@@ -195,9 +200,9 @@ renderDashboard();
 updateNavBadges();
 
 // cerrar modales con click en overlay
-[['solicitudModalOverlay',closeSolicitudModal],['geModalOverlay',closeGECalc],['addEquipoOverlay',closeAddEquipoModal],['editEquipoOverlay',closeEditEquipoModal],['issueModalOverlay',closeChecklistIssueModal],['provOrderModalOverlay',closeProviderOrderModal],['hospOrderModalOverlay',closeHospOrderModal],['solicitudServicioModalOverlay',closeSolicitudServicioModal],['addHospitalOverlay',closeAddHospitalModal]].forEach(([id,fn])=>{
+[['solicitudModalOverlay',closeSolicitudModal],['geModalOverlay',closeGECalc],['addEquipoOverlay',closeAddEquipoModal],['editEquipoOverlay',closeEditEquipoModal],['issueModalOverlay',closeChecklistIssueModal],['provOrderModalOverlay',closeProviderOrderModal],['hospOrderModalOverlay',closeHospOrderModal],['solicitudServicioModalOverlay',closeSolicitudServicioModal],['addHospitalOverlay',closeAddHospitalModal],['posponerOverlay',closePosponerModal]].forEach(([id,fn])=>{
   document.getElementById(id).addEventListener('click', (ev)=>{ if(ev.target.id===id) fn(); });
 });
 document.addEventListener('keydown', (ev)=>{
-  if(ev.key==='Escape'){ closeDrawer(); closeSolicitudModal(); closeGECalc(); closeAddEquipoModal(); closeEditEquipoModal(); closeChecklistIssueModal(); closeProviderOrderModal(); closeHospOrderModal(); closeSolicitudServicioModal(); closeAddHospitalModal(); }
+  if(ev.key==='Escape'){ closeDrawer(); closeSolicitudModal(); closeGECalc(); closeAddEquipoModal(); closeEditEquipoModal(); closeChecklistIssueModal(); closeProviderOrderModal(); closeHospOrderModal(); closeSolicitudServicioModal(); closeAddHospitalModal(); closePosponerModal(); cerrarPanelesTopbar(); }
 });

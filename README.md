@@ -36,6 +36,7 @@ se reinician al recargar la página, excepto la sesión de usuario, que se guard
 │   ├── equipos.js          Calculadora GE, alta/edición/baja/envío a servicio de equipo.
 │   ├── dashboard.js        Panel General e Indicadores.
 │   ├── provider.js         Portal de Proveedor completo (hospitales, órdenes, técnicos).
+│   ├── topbar.js           Buscador global y centro de notificaciones de la barra superior.
 │   └── shell.js            Navegación, login/roles, e inicialización — se carga al final.
 ├── legacy/
 │   └── mockup-gestion-equipos-medicos.html
@@ -43,6 +44,9 @@ se reinician al recargar la página, excepto la sesión de usuario, que se guard
 │                          mockup (sin login, sin roles, sin portal de proveedor). Se
 │                          conserva solo como referencia — no tiene funcionalidad que no
 │                          esté ya cubierta por index.html. No se sigue desarrollando.
+├── docs/
+│   └── BACKLOG.md         Definiciones pendientes del mockup: historias listas para
+│                          implementar + decisiones de producto para el build real.
 └── README.md            Este archivo.
 ```
 
@@ -192,3 +196,8 @@ Este es un **mockup de demostración**, no una app en producción. En particular
 
 A partir de esta base, el trabajo continuará módulo por módulo (inventario, mantenimiento,
 revisiones, correctivo, indicadores, portal de proveedor) según se vaya priorizando.
+
+Lo que está definido y pendiente de construir vive en **[`docs/BACKLOG.md`](docs/BACKLOG.md)**:
+historias de usuario con criterios de aceptación para lo que se puede implementar en el
+mockup, y decisiones de producto (autenticación, multi-tenant, indicadores reales) para quien
+construya la versión final.

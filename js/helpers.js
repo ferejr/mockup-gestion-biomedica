@@ -88,22 +88,27 @@ function equiposNoOperativos(){
 function ordenesEmergenciaActivas(){
   return correctivo.filter(c=>c.categoria==='Urgente emergencia' && c.estado!=='Cerrada');
 }
-function equiposConIMPVencido(){
-  // Compara la fecha del último mantenimiento preventivo registrado contra la
-  // frecuencia que le corresponde según su clasificación GE (4 / 6 / 12 meses).
-  const hoy = new Date();
+// Meses entre inspecciones preventivas según la frecuencia que dicta el Número GE.
+function mesesPorFrecuencia(freq){ return freq === 'Trimestral' ? 4 : (freq === 'Semestral' ? 6 : 12); }
+
+// Equipos del programa preventivo cuya fecha objetivo cae dentro de la ventana indicada.
+// Con diasAnticipacion = 0 devuelve solo los ya vencidos; con 30, además los que vencen
+// en los próximos 30 días. Un equipo del programa sin ningún preventivo registrado cuenta
+// siempre como vencido, porque nunca se le ha hecho la primera inspección.
+function equiposIMPPorVencer(diasAnticipacion){
+  const corte = new Date();
+  corte.setDate(corte.getDate() + (diasAnticipacion || 0));
   return equipos.filter(e=>{
     const total = geTotal(e.ge);
     if(geClasificacion(total) !== 'I') return false;
-    const freq = geFrecuencia(total);
-    const meses = freq === 'Trimestral' ? 4 : (freq === 'Semestral' ? 6 : 12);
     const preventivos = (e.historial || []).filter(h=>h.tipo==='Preventivo').sort((a,b)=> b.fecha.localeCompare(a.fecha));
     if(preventivos.length === 0) return true;
     const limite = new Date(preventivos[0].fecha + 'T00:00:00');
-    limite.setMonth(limite.getMonth() + meses);
-    return hoy >= limite;
+    limite.setMonth(limite.getMonth() + mesesPorFrecuencia(geFrecuencia(total)));
+    return corte >= limite;
   });
 }
+function equiposConIMPVencido(){ return equiposIMPPorVencer(0); }
 function showLoginNotifications(user){
   const role = USER_ROLES[user].role;
   const prog = pctCumplimientoHoy();
