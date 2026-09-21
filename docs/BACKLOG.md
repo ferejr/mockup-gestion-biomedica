@@ -11,10 +11,11 @@ Está dividido en dos secciones:
 - **[Sección B — Decisiones de producto](#sección-b--decisiones-de-producto)**: definiciones que afectan al
   producto real y se documentan aquí, sin implementarse en el mockup.
 
-> **Estado:** 5 de las 6 historias de la Sección A están implementadas. **HU-01 (buscador
-> global) se descartó** tras verla funcionando: no se consideró necesaria y se retiró de la
-> barra superior. Las decisiones de la Sección B siguen siendo definiciones para el producto
-> real, sin código.
+> **Estado:** las 6 historias de la Sección A están implementadas. HU-01 pasó por dos
+> iteraciones: el buscador original (una lista desplegable bajo la barra) se descartó por no
+> aportar suficiente, y se reemplazó por una **paleta de comandos (Ctrl/⌘ K)** que además de
+> buscar registros dice a dónde ir — ver la definición actualizada en HU-01. Las decisiones
+> de la Sección B siguen siendo definiciones para el producto real, sin código.
 >
 > Dos definiciones que quedaron abiertas se resolvieron así al implementar, y pueden
 > cambiarse: (1) al posponer una orden se conserva la urgencia con la que se reportó en
@@ -28,7 +29,7 @@ Está dividido en dos secciones:
 
 | # | Tema | Decisión | Dónde |
 |---|---|---|---|
-| 1 | Buscador global | ~~Busca equipos, órdenes y solicitudes~~ · **descartado** | [HU-01](#hu-01--buscador-global-de-la-barra-superior) |
+| 1 | Buscador global | Paleta de comandos (Ctrl K): navegación, acciones y registros | [HU-01](#hu-01--buscador-global-de-la-barra-superior) |
 | 1 | Notificaciones | Órdenes urgentes abiertas + pendientes del rol | [HU-02](#hu-02--centro-de-notificaciones) |
 | 2 | Posponer orden | Coordinador/Director, con motivo y nueva fecha | [HU-03](#hu-03--posponer-una-orden-de-mantenimiento) |
 | 2 | IMP automático | Automático, con anticipación configurable por hospital | [HU-04](#hu-04--generación-automática-de-órdenes-imp-programado) |
@@ -45,35 +46,44 @@ Está dividido en dos secciones:
 
 ## HU-01 · Buscador global de la barra superior
 
-> ⛔ **Descartada.** Se implementó, se revisó funcionando y se decidió retirarla: no se
-> consideró necesaria para el producto. El campo de búsqueda ya no existe en la barra
-> superior. La definición se conserva abajo por si se retoma más adelante; para buscar
-> órdenes está la búsqueda propia de cada tabla ([HU-06](#hu-06--búsqueda-en-las-tablas-de-órdenes)).
+> Como **cualquier usuario de la plataforma**, quiero un único punto de entrada para llegar a
+> cualquier parte —un módulo, una acción o un registro— sin tener que recordar en qué menú
+> está, para dejar de navegar a ciegas.
 
-> Como **cualquier usuario del hospital**, quiero buscar desde la barra superior para llegar
-> a un equipo, una orden o una solicitud sin tener que navegar hasta su módulo y filtrar ahí.
+**Historia de esta historia:** la primera versión fue una lista desplegable bajo la barra
+superior que solo buscaba registros. Se descartó por no aportar lo suficiente. La versión
+actual es una **paleta de comandos** al estilo de Supabase: además de encontrar registros,
+responde "¿a dónde voy?" ofreciendo los módulos y las acciones disponibles.
 
-**Situación actual:** el campo `#globalSearch` existe en el HTML con el placeholder "Buscar
-equipo, folio o serie…" pero **no tiene ni una sola referencia en `js/`** — es decorativo.
+**Alcance implementado:**
 
-**Alcance decidido — qué debe encontrar:**
-
-| Tipo | Se busca por | Destino al seleccionar |
+| Grupo | Contenido | Destino al seleccionar |
 |---|---|---|
-| Equipos | Nombre, marca, número de serie, ID (`EQ-####`) | Abre el drawer de detalle del equipo |
-| Órdenes de mantenimiento | Folio (`MC-####`) | Lleva a Órdenes de Mantenimiento con la orden localizada |
-| Solicitudes de revisión | Folio (`SR-####`) y de aprobación (`AP-####`) | Lleva a Revisiones Diarias, a la pestaña correspondiente |
-
-Los hospitales del portal de proveedor **quedan fuera** de este buscador.
+| Ir a | Los módulos que el rol tiene habilitados | Navega a ese módulo |
+| Acciones | Agregar equipo, solicitar revisión, enviar a servicio, calcular Número GE, dar de alta hospital, cerrar sesión | Ejecuta la acción, navegando primero si hace falta |
+| Equipos | Nombre, marca, serie, ID, área, categoría | Abre el drawer de detalle |
+| Órdenes | Folio, equipo, técnico, origen | Abre el detalle de la orden |
+| Solicitudes | Folio `SR-####` / `AP-####`, equipo, solicitante | Lleva a la pestaña correspondiente |
+| Hospitales *(portal proveedor)* | Nombre, ciudad, id | Abre el detalle del hospital |
 
 **Criterios de aceptación:**
 
-- Al escribir, se muestran resultados agrupados por tipo (Equipos / Órdenes / Solicitudes).
-- Cada resultado indica de qué tipo es, para distinguir un `MC-0892` de un `SR-0004`.
-- Seleccionar un resultado navega al destino de la tabla de arriba.
-- Solo aparecen resultados de módulos que el rol tiene permitidos (un técnico no ve
-  resultados de órdenes de mantenimiento, porque no tiene acceso a esa vista).
-- Sin coincidencias, se muestra un estado vacío explícito, no una lista en blanco.
+- Se abre con `Ctrl/⌘ + K` desde cualquier parte, y con el botón de la barra superior.
+- Sin escribir nada muestra los destinos y las acciones disponibles, como punto de partida.
+- Se maneja con teclado: `↑` `↓` para moverse (la selección da la vuelta), `↵` para abrir,
+  `esc` para cerrar.
+- La búsqueda ignora acentos: escribir "endoscopia" encuentra "Endoscopía".
+- Solo ofrece lo que el rol puede abrir: un técnico no ve órdenes de mantenimiento ni el
+  módulo correspondiente.
+- Funciona en las dos aplicaciones — la hospitalaria y el portal de proveedor —, ofreciendo
+  en cada una sus propios módulos, acciones y registros.
+- Sin coincidencias muestra un estado vacío explícito.
+
+**Nota técnica:** los comandos de navegación y de acción se derivan del DOM (los botones del
+menú y los de acción de cada vista), leyendo su `display` en línea — que es lo que escriben
+`applyRolePermissions()` y `applyProviderRolePermissions()`. Así la paleta hereda los
+permisos ya definidos en vez de mantener una segunda lista de reglas por rol que se pueda
+desincronizar. Implementada en `js/paleta.js`.
 
 **Notas técnicas:** el filtrado por texto ya está resuelto en `renderInventario()`
 (`js/inventario.js`) — conviene extraer ese patrón a un helper reutilizable en vez de
@@ -235,8 +245,9 @@ hay que decidirlo para el producto real.
 **cero** campos de entrada, frente a los 5 que tiene Inventario. Solo hay contadores no
 interactivos.
 
-**Alcance decidido:** campo de **búsqueda por texto** en ambas tablas. Con HU-01 descartada,
-esta es la única forma de buscar órdenes en el mockup.
+**Alcance decidido:** campo de **búsqueda por texto** en ambas tablas, complementario a la
+paleta de comandos de [HU-01](#hu-01--buscador-global-de-la-barra-superior): la paleta sirve
+para saltar a una orden concreta, este filtro para acotar la lista que se está revisando.
 
 **Fuera de alcance en este release:** selectores de estado y urgencia, y hacer clickeables
 los contadores que ya existen. Se descartaron conscientemente; pueden retomarse después.
