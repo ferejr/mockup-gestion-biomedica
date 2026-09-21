@@ -122,8 +122,55 @@
   .icon-btn{
     width:34px; height:34px; border-radius:8px; border:1px solid var(--line); background:var(--panel);
     display:flex; align-items:center; justify-content:center; color:var(--ink-soft);
+    position:relative;
   }
   .icon-btn svg{width:16px; height:16px;}
+
+  /* Buscador global y centro de notificaciones (barra superior) */
+  .search-wrap{margin-left:auto; position:relative;}
+  .search-wrap .search{margin-left:0;}
+  .notif-wrap{position:relative;}
+  .notif-badge{
+    position:absolute; top:-5px; right:-5px; min-width:17px; height:17px; padding:0 4px;
+    border-radius:20px; background:var(--red-700); color:#fff;
+    font-family:'IBM Plex Mono',monospace; font-size:10px; font-weight:600;
+    display:flex; align-items:center; justify-content:center; border:1.5px solid var(--panel);
+  }
+  .topbar-panel{
+    display:none; position:absolute; top:calc(100% + 8px); right:0; z-index:60;
+    width:min(370px, 88vw); max-height:60vh; overflow-y:auto;
+    background:var(--panel); border:1px solid var(--line); border-radius:10px;
+    box-shadow:0 18px 40px -14px rgba(15,49,46,0.3);
+  }
+  .topbar-panel.active{display:block;}
+  .search-group{border-bottom:1px solid var(--line-soft); padding:6px 0;}
+  .search-group:last-child{border-bottom:none;}
+  .search-group-label{
+    font-size:10.5px; text-transform:uppercase; letter-spacing:0.07em; color:var(--muted);
+    font-weight:600; padding:6px 14px 4px;
+  }
+  .search-result, .notif-item{
+    display:block; width:100%; text-align:left; background:none; border:none;
+    padding:8px 14px; border-radius:0;
+  }
+  .search-result:hover, .notif-item:hover{background:var(--panel-2);}
+  .search-result-main{font-size:13.2px; font-weight:600; color:var(--ink);}
+  .search-result-sub{font-size:11.5px; color:var(--muted); margin-top:2px;}
+  .search-empty{padding:18px 14px; text-align:center; font-size:12.5px; color:var(--muted);}
+  .notif-head{
+    font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em;
+    color:var(--muted); padding:12px 14px 8px; border-bottom:1px solid var(--line-soft);
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  .notif-item{display:flex; gap:10px; align-items:flex-start; border-bottom:1px solid var(--line-soft);}
+  .notif-item:last-child{border-bottom:none;}
+  .notif-dot{width:8px; height:8px; border-radius:50%; flex:0 0 8px; margin-top:5px;}
+  .notif-dot.tone-danger{background:var(--red-700);}
+  .notif-dot.tone-warning{background:var(--amber-600);}
+  .notif-dot.tone-success{background:var(--green-600);}
+  .notif-dot.tone-info{background:var(--teal-600);}
+  .notif-title{display:block; font-size:12.8px; font-weight:600; color:var(--ink);}
+  .notif-text{display:block; font-size:11.8px; color:var(--muted); margin-top:2px;}
 
   .content{padding:26px 28px 60px; max-width:1320px; width:100%; margin:0 auto;}
   .view{display:none; animation:fade .18s ease;}
@@ -314,6 +361,21 @@
   .check-meta{display:flex; gap:10px; margin-top:2px;}
   .check-meta input{flex:1;}
 
+  /* Listas editables de accesorios y manuales (alta / edición de equipo) */
+  .chip-list{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:6px;}
+  .chip{
+    display:inline-flex; align-items:center; gap:5px;
+    background:var(--panel-2); border:1px solid var(--line); border-radius:20px;
+    padding:3px 5px 3px 11px; font-size:12.5px; color:var(--ink-soft);
+  }
+  .chip-x{
+    width:17px; height:17px; border-radius:50%; border:none; background:transparent;
+    color:var(--muted); display:flex; align-items:center; justify-content:center; padding:0;
+  }
+  .chip-x:hover{background:var(--red-100); color:var(--red-700);}
+  .chip-x svg{width:11px; height:11px;}
+  .chip-empty{font-size:12px; color:var(--muted); font-style:italic;}
+
   .empty-state{padding:40px 20px; text-align:center; color:var(--muted);}
   .empty-state svg{width:34px; height:34px; margin-bottom:10px; opacity:.5;}
   .empty-state .t{font-weight:600; color:var(--ink-soft); margin-bottom:3px;}
@@ -336,7 +398,8 @@
     .sidebar.mobile-open{transform:none;}
     .content{padding:18px 14px 50px;}
     .grid-4, .grid-3, .grid-2, .form-row, .kv{grid-template-columns:1fr;}
-    .search{display:none;}
+    .search, .search-wrap{display:none;}
+    .notif-wrap{margin-left:auto;}
   }
 
   /* ===== Login gate ===== */

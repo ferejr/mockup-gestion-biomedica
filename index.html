@@ -287,13 +287,21 @@
         <div class="topbar-eyebrow">Hospital General del Valle · ZMG</div>
         <h1 id="topbarTitle">Panel General</h1>
       </div>
-      <div class="search">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
-        <input type="text" placeholder="Buscar equipo, folio o serie…" id="globalSearch">
+      <div class="search-wrap">
+        <div class="search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+          <input type="text" placeholder="Buscar equipo, folio o serie…" id="globalSearch"
+                 oninput="renderBusquedaGlobal()" onfocus="renderBusquedaGlobal()" autocomplete="off">
+        </div>
+        <div class="topbar-panel" id="searchResults"></div>
       </div>
-      <button class="icon-btn" title="Notificaciones">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg>
-      </button>
+      <div class="notif-wrap">
+        <button class="icon-btn" title="Notificaciones" onclick="toggleNotificaciones()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg>
+          <span class="notif-badge" id="notifBadge" style="display:none;">0</span>
+        </button>
+        <div class="topbar-panel" id="notifPanel"></div>
+      </div>
     </div>
 
     <div class="content">
@@ -675,6 +683,11 @@
           <div class="card kpi"><div class="kpi-label">Pospuesta <span class="kpi-dot" style="background:var(--muted)"></span></div><div class="kpi-value" id="corrPos">0</div></div>
         </div>
 
+        <div class="filters">
+          <input class="input" id="corrBuscar" placeholder="Buscar por folio, equipo o técnico…"
+                 style="min-width:300px;" oninput="renderCorrectivo()">
+        </div>
+
         <div class="card">
           <div class="table-wrap">
             <table>
@@ -884,6 +897,10 @@
           <div class="card kpi"><div class="kpi-label">Regular <span class="kpi-dot" style="background:var(--green-600)"></span></div><div class="kpi-value" id="provOrdReg">0</div></div>
           <div class="card kpi"><div class="kpi-label">Cerradas <span class="kpi-dot" style="background:var(--muted)"></span></div><div class="kpi-value" id="provOrdCerradas">0</div></div>
         </div>
+        <div class="filters">
+          <input class="input" id="provOrdBuscar" placeholder="Buscar por folio, hospital, equipo o técnico…"
+                 style="min-width:340px;" oninput="renderProviderOrdenesGlobal()">
+        </div>
         <div class="card">
           <div class="table-wrap">
             <table>
@@ -965,6 +982,10 @@
           <label>Próxima renovación</label>
           <input class="input" type="date" id="newHospRenovacion">
         </div>
+      </div>
+      <div class="field">
+        <label>Anticipación de órdenes IMP <span class="hint">— días antes de la fecha objetivo del preventivo</span></label>
+        <input class="input" type="number" min="0" max="180" id="newHospDiasIMP" value="30">
       </div>
       <div class="scope-note">Este hospital se agrega con listas de equipos y órdenes vacías — se van llenando conforme se dan de alta sus equipos, igual que Clínica Santa Fe u Hospital Regional Tonalá.</div>
     </div>
@@ -1206,6 +1227,36 @@
   </div>
 </div>
 
+<!-- ============ MODAL: POSPONER ORDEN ============ -->
+<div class="modal-overlay" id="posponerOverlay">
+  <div class="modal" style="width:min(480px, 100%);">
+    <div class="modal-head">
+      <div>
+        <h3>Posponer orden <span class="mono" id="posponerFolio">—</span></h3>
+        <p>El aplazamiento queda registrado en la bitácora de la orden.</p>
+      </div>
+      <button class="drawer-close" onclick="closePosponerModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label>Motivo del aplazamiento <span class="hint">— obligatorio</span></label>
+        <textarea class="input" id="posponerMotivo" placeholder="Ej. El área no puede liberar el equipo esta semana por carga quirúrgica."></textarea>
+      </div>
+      <div class="field">
+        <label>Nueva fecha programada <span class="hint">— obligatoria</span></label>
+        <input class="input" type="date" id="posponerFecha">
+      </div>
+      <div class="scope-note">La urgencia con la que se reportó la orden se conserva en el registro: posponer no la reevalúa.</div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closePosponerModal()">Cancelar</button>
+      <button class="btn btn-clay" onclick="confirmarPosponerOrden()">Posponer orden</button>
+    </div>
+  </div>
+</div>
+
 <!-- ============ MODAL: CALCULADORA GE ============ -->
 <div class="modal-overlay" id="geModalOverlay">
   <div class="modal">
@@ -1315,7 +1366,33 @@
         </div>
         <div class="field"><label>Proveedor</label><input class="input" id="newProveedor" placeholder="Nombre del proveedor"></div>
       </div>
-      <div class="scope-note">En este mockup el alta agrega el equipo con estado "Operativo" y sin clasificación GE; se clasifica luego desde Programa de Mantenimiento.</div>
+
+      <div class="form-row">
+        <div class="field"><label>Garantía <span class="hint">— opcional</span></label><input class="input" id="newGarantia" placeholder="Ej. Vigente hasta 2027-05-30 (partes y mano de obra)"></div>
+        <div class="field"><label>Vida útil estimada <span class="hint">— años</span></label><input class="input" type="number" min="1" max="40" id="newVidaUtil" placeholder="Ej. 10"></div>
+      </div>
+
+      <div class="field">
+        <label>Accesorios <span class="hint">— se agregan de uno en uno</span></label>
+        <div class="chip-list" id="newAccesoriosList"></div>
+        <div class="check-meta">
+          <input class="input" id="newAccesoriosInput" placeholder="Ej. Cable de paciente de 5 derivaciones"
+                 onkeydown="if(event.key==='Enter'){event.preventDefault(); agregarItemLista('newAccesorios');}">
+          <button class="btn btn-ghost btn-sm" onclick="agregarItemLista('newAccesorios')">Agregar</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Manuales y documentos</label>
+        <div class="chip-list" id="newManualesList"></div>
+        <div class="check-meta">
+          <input class="input" id="newManualesInput" placeholder="Ej. Manual de servicio (rev. 2024)"
+                 onkeydown="if(event.key==='Enter'){event.preventDefault(); agregarItemLista('newManuales');}">
+          <button class="btn btn-ghost btn-sm" onclick="agregarItemLista('newManuales')">Agregar</button>
+        </div>
+      </div>
+
+      <div class="scope-note">En este mockup el alta agrega el equipo con estado "Operativo" y sin clasificación GE; se clasifica luego desde Programa de Mantenimiento. Los manuales se registran como referencia de texto — adjuntar archivos requiere almacenamiento del backend.</div>
     </div>
     <div class="modal-foot">
       <button class="btn btn-ghost" onclick="closeAddEquipoModal()">Cancelar</button>
@@ -1351,8 +1428,33 @@
         </div>
         <div class="field"><label>Proveedor</label><input class="input" id="editProveedor"></div>
       </div>
-      <div class="field"><label>Estado operativo</label>
-        <select class="select" id="editEstado"><option>Operativo</option><option>En mantenimiento</option><option>Fuera de servicio</option></select>
+      <div class="form-row">
+        <div class="field"><label>Estado operativo</label>
+          <select class="select" id="editEstado"><option>Operativo</option><option>En mantenimiento</option><option>Fuera de servicio</option></select>
+        </div>
+        <div class="field"><label>Vida útil estimada <span class="hint">— años</span></label><input class="input" type="number" min="1" max="40" id="editVidaUtil"></div>
+      </div>
+
+      <div class="field"><label>Garantía</label><input class="input" id="editGarantia" placeholder="Ej. Vigente hasta 2027-05-30 (partes y mano de obra)"></div>
+
+      <div class="field">
+        <label>Accesorios <span class="hint">— se agregan de uno en uno</span></label>
+        <div class="chip-list" id="editAccesoriosList"></div>
+        <div class="check-meta">
+          <input class="input" id="editAccesoriosInput" placeholder="Ej. Cable de paciente de 5 derivaciones"
+                 onkeydown="if(event.key==='Enter'){event.preventDefault(); agregarItemLista('editAccesorios');}">
+          <button class="btn btn-ghost btn-sm" onclick="agregarItemLista('editAccesorios')">Agregar</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Manuales y documentos</label>
+        <div class="chip-list" id="editManualesList"></div>
+        <div class="check-meta">
+          <input class="input" id="editManualesInput" placeholder="Ej. Manual de servicio (rev. 2024)"
+                 onkeydown="if(event.key==='Enter'){event.preventDefault(); agregarItemLista('editManuales');}">
+          <button class="btn btn-ghost btn-sm" onclick="agregarItemLista('editManuales')">Agregar</button>
+        </div>
       </div>
     </div>
     <div class="modal-foot">
@@ -1376,6 +1478,7 @@
 <script src="js/equipos.js"></script>
 <script src="js/dashboard.js"></script>
 <script src="js/provider.js"></script>
+<script src="js/topbar.js"></script>
 <script src="js/shell.js"></script>
 </body>
 </html>

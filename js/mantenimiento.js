@@ -73,7 +73,46 @@ function renderMantenimiento(){
 }
 
 /* ---- Mantenimiento preventivo programado para el mes actual ---- */
-function mesesPorFrecuencia(freq){ return freq === 'Trimestral' ? 4 : (freq === 'Semestral' ? 6 : 12); }
+// mesesPorFrecuencia() vive en helpers.js: la usan también el cálculo de vencimientos
+// y la generación automática de órdenes "IMP programado".
+
+/* ---- Generación automática de órdenes "IMP programado" ----
+   Abre solas las órdenes del programa preventivo cuando la fecha objetivo del equipo
+   entra en la ventana de anticipación configurada para el hospital.
+
+   LIMITACIÓN DEL MOCKUP: aquí se evalúa al cargar la aplicación, porque no hay servidor
+   ni tareas programadas. En el producto real esto corresponde a un job periódico del
+   backend, que debe correr aunque nadie abra la aplicación. */
+const DIAS_ANTICIPACION_IMP_DEFAULT = 30;
+function diasAnticipacionIMP(){
+  const h = hospitalById('HOSP-1');
+  return (h && typeof h.diasAnticipacionIMP === 'number') ? h.diasAnticipacionIMP : DIAS_ANTICIPACION_IMP_DEFAULT;
+}
+function generarOrdenesIMPProgramado(){
+  const dias = diasAnticipacionIMP();
+  const hoy = new Date().toISOString().slice(0,10);
+  const hora = new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+  const generadas = [];
+
+  equiposIMPPorVencer(dias).forEach(e=>{
+    // Sin duplicados: si el equipo ya tiene una orden de preventivo sin cerrar, se respeta.
+    const yaTiene = correctivo.some(c => c.equipoId === e.id && c.origen === 'IMP programado' && c.estado !== 'Cerrada');
+    if(yaTiene) return;
+
+    const folio = 'MC-' + String(correctivoFolioSeq++).padStart(4,'0');
+    correctivo.unshift({
+      folio, equipoId: e.id, origen:'IMP programado',
+      detalle:'Inspección preventiva ' + geFrecuencia(geTotal(e.ge)).toLowerCase() + ' según su clasificación GE.',
+      categoria:'Regular', estado:'Abierta', tecnico:'Sin asignar', fecha: hoy,
+      notasProveedor:'', resueltoPor:'', fechaResuelto:'', validadoPor:'', fechaCierre:'', comentarioValidacion:'',
+      bitacora:[{fecha:hoy, hora, usuario:'Sistema',
+        evento:'Orden creada automáticamente — preventivo programado dentro de la ventana de ' + dias + ' días de anticipación.'}]
+    });
+    generadas.push(folio);
+  });
+  return generadas;
+}
+
 function toISODateLocal(d){
   const y = d.getFullYear(), m = String(d.getMonth()+1).padStart(2,'0'), day = String(d.getDate()).padStart(2,'0');
   return `${y}-${m}-${day}`;

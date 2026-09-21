@@ -18,9 +18,33 @@ function estadoOrdenPill(estado){
 function ordenActivaDeEquipo(equipoId){
   return correctivo.find(c => c.equipoId === equipoId && c.estado !== 'Cerrada') || null;
 }
+// Filtra por folio, nombre del equipo o técnico asignado. Los contadores de arriba
+// siguen mostrando el total real, no el filtrado.
+function ordenesFiltradas(){
+  const input = document.getElementById('corrBuscar');
+  const q = input ? input.value.trim().toLowerCase() : '';
+  if(!q) return correctivo;
+  return correctivo.filter(c=>{
+    const e = equipoById(c.equipoId);
+    return c.folio.toLowerCase().includes(q)
+      || (e && e.nombre.toLowerCase().includes(q))
+      || (c.tecnico || '').toLowerCase().includes(q);
+  });
+}
 function renderCorrectivo(){
   const body = document.getElementById('correctivoBody');
-  body.innerHTML = correctivo.map(c=>{
+  const lista = ordenesFiltradas();
+
+  if(lista.length === 0){
+    body.innerHTML = `<tr><td colspan="7"><div class="empty-state">
+      <div class="t">Sin coincidencias</div>
+      <div>Ninguna orden coincide con la búsqueda.</div>
+    </div></td></tr>`;
+    actualizarContadoresCorrectivo();
+    return;
+  }
+
+  body.innerHTML = lista.map(c=>{
     const e = equipoById(c.equipoId);
     return `
     <tr class="clickable" onclick="openHospOrderModal('${c.folio}')">
@@ -37,6 +61,10 @@ function renderCorrectivo(){
     </tr>`;
   }).join('');
 
+  actualizarContadoresCorrectivo();
+}
+
+function actualizarContadoresCorrectivo(){
   document.getElementById('corrEmerg').textContent = correctivo.filter(c=>c.categoria==='Urgente emergencia' && c.estado!=='Cerrada').length;
   document.getElementById('corrUrg').textContent = correctivo.filter(c=>c.categoria==='Urgente' && c.estado!=='Cerrada').length;
   document.getElementById('corrReg').textContent = correctivo.filter(c=>c.categoria==='Regular' && c.estado!=='Cerrada').length;
@@ -78,8 +106,15 @@ function openHospOrderModal(folio){
   `;
 
   const puedeValidar = (currentRole === 'admin' || currentRole === 'coordinador');
+  // Posponer es decisión del hospital (Director/Coordinador) y solo tiene sentido
+  // mientras la orden siga viva.
+  const puedePosponer = puedeValidar && c.estado !== 'Cerrada' && c.categoria !== 'Pospuesta';
   let validacionHtml = '';
-  let footHtml = `<button class="btn btn-ghost" onclick="closeHospOrderModal()">Cerrar</button>`;
+  let footHtml = `<button class="btn btn-ghost" onclick="closeHospOrderModal()">Cerrar</button>`
+    + (puedePosponer ? `<button class="btn btn-ghost" onclick="openPosponerModal()">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+        Posponer
+      </button>` : '');
 
   if(c.estado === 'Resuelto por proveedor'){
     validacionHtml = `
@@ -111,7 +146,15 @@ function openHospOrderModal(folio){
     validacionHtml = `<div class="scope-note" style="margin-top:10px;">Esta orden todavía no ha sido marcada como resuelta por el proveedor.</div>`;
   }
 
-  document.getElementById('hospOrderValidacion').innerHTML = validacionHtml + bitacoraHTML(c.bitacora);
+  // Aviso de aplazamiento: se antepone a lo anterior para que se vea de inmediato.
+  const pospuestaHtml = (c.categoria === 'Pospuesta' && c.fechaReprogramada) ? `
+    <div class="scope-note" style="border-color:var(--muted); margin-top:10px;">
+      <strong>Orden pospuesta</strong> — reprogramada para ${fmtDate(c.fechaReprogramada)}.
+      ${c.motivoAplazamiento ? `<div style="margin-top:5px;">"${c.motivoAplazamiento}"</div>` : ''}
+      ${c.urgenciaOriginal ? `<div style="margin-top:5px;">Urgencia con la que se reportó: ${c.urgenciaOriginal}.</div>` : ''}
+    </div>` : '';
+
+  document.getElementById('hospOrderValidacion').innerHTML = pospuestaHtml + validacionHtml + bitacoraHTML(c.bitacora);
   document.getElementById('hospOrderFoot').innerHTML = footHtml;
   document.getElementById('hospOrderModalOverlay').classList.add('active');
 }
@@ -119,6 +162,45 @@ function closeHospOrderModal(){
   document.getElementById('hospOrderModalOverlay').classList.remove('active');
   currentHospOrderFolio = null;
 }
+/* ---- Posponer una orden (Director / Coordinador) ----
+   Se conserva la urgencia con la que se reportó en `urgenciaOriginal`: la categoría pasa a
+   "Pospuesta" para que los contadores y la tabla la muestren como tal, pero no se pierde el
+   dato con el que se evaluó al reportarla (ver D-01 en docs/BACKLOG.md). */
+function openPosponerModal(){
+  if(!currentHospOrderFolio) return;
+  document.getElementById('posponerMotivo').value = '';
+  document.getElementById('posponerFecha').value = '';
+  document.getElementById('posponerFolio').textContent = currentHospOrderFolio;
+  document.getElementById('posponerOverlay').classList.add('active');
+}
+function closePosponerModal(){ document.getElementById('posponerOverlay').classList.remove('active'); }
+function confirmarPosponerOrden(){
+  if(!currentHospOrderFolio) return;
+  const motivo = document.getElementById('posponerMotivo').value.trim();
+  const fecha = document.getElementById('posponerFecha').value;
+  if(!motivo){ showToast('Indica el motivo del aplazamiento', 'warning'); return; }
+  if(!fecha){ showToast('Indica la nueva fecha programada', 'warning'); return; }
+
+  const c = correctivo.find(x=>x.folio===currentHospOrderFolio);
+  if(!c) return;
+
+  actualizarOrdenGlobal('HOSP-1', currentHospOrderFolio, {
+    urgenciaOriginal: c.urgenciaOriginal || c.categoria,
+    categoria: 'Pospuesta',
+    motivoAplazamiento: motivo,
+    fechaReprogramada: fecha
+  });
+  agregarBitacora('HOSP-1', currentHospOrderFolio, currentUser,
+    'Orden pospuesta para el ' + fmtDate(fecha) + '. Motivo: "' + motivo + '".');
+
+  closePosponerModal();
+  closeHospOrderModal();
+  renderCorrectivo();
+  renderDashboard();
+  updateNavBadges();
+  showToast('Orden ' + c.folio + ' pospuesta al ' + fmtDate(fecha), 'success');
+}
+
 function confirmarYCerrarOrdenHospital(){
   if(!currentHospOrderFolio) return;
   const comentarioEl = document.getElementById('hospValidacionComentario');
