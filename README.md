@@ -36,7 +36,7 @@ se reinician al recargar la página, excepto la sesión de usuario, que se guard
 │   ├── equipos.js          Calculadora GE, alta/edición/baja/envío a servicio de equipo.
 │   ├── dashboard.js        Panel General e Indicadores.
 │   ├── provider.js         Portal de Proveedor completo (hospitales, órdenes, técnicos).
-│   ├── topbar.js           Buscador global y centro de notificaciones de la barra superior.
+│   ├── topbar.js           Centro de notificaciones de la barra superior (la campana).
 │   └── shell.js            Navegación, login/roles, e inicialización — se carga al final.
 ├── legacy/
 │   └── mockup-gestion-equipos-medicos.html

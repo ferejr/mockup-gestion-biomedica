@@ -11,8 +11,10 @@ Está dividido en dos secciones:
 - **[Sección B — Decisiones de producto](#sección-b--decisiones-de-producto)**: definiciones que afectan al
   producto real y se documentan aquí, sin implementarse en el mockup.
 
-> **Estado:** las 6 historias de la Sección A **ya están implementadas** en el mockup. Las
-> decisiones de la Sección B siguen siendo definiciones para el producto real, sin código.
+> **Estado:** 5 de las 6 historias de la Sección A están implementadas. **HU-01 (buscador
+> global) se descartó** tras verla funcionando: no se consideró necesaria y se retiró de la
+> barra superior. Las decisiones de la Sección B siguen siendo definiciones para el producto
+> real, sin código.
 >
 > Dos definiciones que quedaron abiertas se resolvieron así al implementar, y pueden
 > cambiarse: (1) al posponer una orden se conserva la urgencia con la que se reportó en
@@ -26,7 +28,7 @@ Está dividido en dos secciones:
 
 | # | Tema | Decisión | Dónde |
 |---|---|---|---|
-| 1 | Buscador global | Busca equipos, órdenes y solicitudes | [HU-01](#hu-01--buscador-global-de-la-barra-superior) |
+| 1 | Buscador global | ~~Busca equipos, órdenes y solicitudes~~ · **descartado** | [HU-01](#hu-01--buscador-global-de-la-barra-superior) |
 | 1 | Notificaciones | Órdenes urgentes abiertas + pendientes del rol | [HU-02](#hu-02--centro-de-notificaciones) |
 | 2 | Posponer orden | Coordinador/Director, con motivo y nueva fecha | [HU-03](#hu-03--posponer-una-orden-de-mantenimiento) |
 | 2 | IMP automático | Automático, con anticipación configurable por hospital | [HU-04](#hu-04--generación-automática-de-órdenes-imp-programado) |
@@ -42,6 +44,11 @@ Está dividido en dos secciones:
 # Sección A — Historias listas para implementar
 
 ## HU-01 · Buscador global de la barra superior
+
+> ⛔ **Descartada.** Se implementó, se revisó funcionando y se decidió retirarla: no se
+> consideró necesaria para el producto. El campo de búsqueda ya no existe en la barra
+> superior. La definición se conserva abajo por si se retoma más adelante; para buscar
+> órdenes está la búsqueda propia de cada tabla ([HU-06](#hu-06--búsqueda-en-las-tablas-de-órdenes)).
 
 > Como **cualquier usuario del hospital**, quiero buscar desde la barra superior para llegar
 > a un equipo, una orden o una solicitud sin tener que navegar hasta su módulo y filtrar ahí.
@@ -228,8 +235,8 @@ hay que decidirlo para el producto real.
 **cero** campos de entrada, frente a los 5 que tiene Inventario. Solo hay contadores no
 interactivos.
 
-**Alcance decidido:** campo de **búsqueda por texto** en ambas tablas, además del buscador
-global de [HU-01](#hu-01--buscador-global-de-la-barra-superior).
+**Alcance decidido:** campo de **búsqueda por texto** en ambas tablas. Con HU-01 descartada,
+esta es la única forma de buscar órdenes en el mockup.
 
 **Fuera de alcance en este release:** selectores de estado y urgencia, y hacer clickeables
 los contadores que ya existen. Se descartaron conscientemente; pueden retomarse después.
