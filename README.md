@@ -47,9 +47,12 @@ se reinician al recargar la página, excepto la sesión de usuario, que se guard
 │                          conserva solo como referencia — no tiene funcionalidad que no
 │                          esté ya cubierta por index.html. No se sigue desarrollando.
 ├── docs/
-│   └── BACKLOG.md         Product Backlog oficial: todas las User Stories vigentes con sus
-│                          Acceptance Criteria, prioridades y personas, más los Pendientes
-│                          por definir. Fuente única — no mantener otra copia del backlog.
+│   ├── BACKLOG.md         Product Backlog oficial: todas las User Stories vigentes con sus
+│   │                      Acceptance Criteria y prioridades. Fuente única — no mantener
+│   │                      otra copia del backlog.
+│   └── PRODUCT_DECISIONS.md
+│                          Reglas y decisiones de producto que explican por qué el software
+│                          se comporta así, incluidas las decisiones todavía abiertas.
 └── README.md            Este archivo.
 ```
 
@@ -198,8 +201,15 @@ Este es un **mockup de demostración**, no una app en producción. En particular
 A partir de esta base, el trabajo continuará módulo por módulo (inventario, mantenimiento,
 revisiones, correctivo, indicadores, portal de proveedor) según se vaya priorizando.
 
-El Product Backlog completo vive en **[`docs/BACKLOG.md`](docs/BACKLOG.md)**: todas las User
-Stories vigentes con sus Acceptance Criteria, prioridades y personas, y los Pendientes por
-definir que aún requieren una decisión (autenticación, indicadores ilustrativos restantes,
-multi-tenant). Es la fuente única del backlog — cualquier cambio funcional se refleja primero
-ahí.
+## Product Documentation
+
+- **[`docs/BACKLOG.md`](docs/BACKLOG.md)** — Product Backlog oficial: todas las User Stories
+  vigentes con sus Acceptance Criteria, prioridades y personas.
+- **[`docs/PRODUCT_DECISIONS.md`](docs/PRODUCT_DECISIONS.md)** — reglas, decisiones de
+  producto y decisiones todavía abiertas.
+
+El backlog define el comportamiento esperado del producto; este mockup es su referencia
+visual y funcional. Ante una discrepancia entre lo que muestra el mockup y lo que dice el
+backlog, **`docs/BACKLOG.md` es la fuente de verdad**. Una decisión marcada como abierta en
+`docs/PRODUCT_DECISIONS.md` no debe resolverse unilateralmente desde desarrollo — requiere
+una decisión del Product Owner.
