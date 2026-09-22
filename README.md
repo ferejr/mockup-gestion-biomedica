@@ -47,8 +47,12 @@ se reinician al recargar la página, excepto la sesión de usuario, que se guard
 │                          conserva solo como referencia — no tiene funcionalidad que no
 │                          esté ya cubierta por index.html. No se sigue desarrollando.
 ├── docs/
-│   └── BACKLOG.md         Definiciones pendientes del mockup: historias listas para
-│                          implementar + decisiones de producto para el build real.
+│   ├── BACKLOG.md         Product Backlog oficial: todas las User Stories vigentes con sus
+│   │                      Acceptance Criteria y prioridades. Fuente única — no mantener
+│   │                      otra copia del backlog.
+│   └── PRODUCT_DECISIONS.md
+│                          Reglas y decisiones de producto que explican por qué el software
+│                          se comporta así, incluidas las decisiones todavía abiertas.
 └── README.md            Este archivo.
 ```
 
@@ -191,15 +195,21 @@ Este es un **mockup de demostración**, no una app en producción. En particular
   respuesta, productividad de IMP por área).
 - La validación de formularios es mínima; la mayoría de los campos vacíos se guardan con un
   valor por defecto (`—`) en vez de bloquear el guardado.
-- El botón de notificaciones y el buscador global de la barra superior son decorativos (sin
-  lógica conectada todavía).
 
 ## Próximos pasos
 
 A partir de esta base, el trabajo continuará módulo por módulo (inventario, mantenimiento,
 revisiones, correctivo, indicadores, portal de proveedor) según se vaya priorizando.
 
-Lo que está definido y pendiente de construir vive en **[`docs/BACKLOG.md`](docs/BACKLOG.md)**:
-historias de usuario con criterios de aceptación para lo que se puede implementar en el
-mockup, y decisiones de producto (autenticación, multi-tenant, indicadores reales) para quien
-construya la versión final.
+## Product Documentation
+
+- **[`docs/BACKLOG.md`](docs/BACKLOG.md)** — Product Backlog oficial: todas las User Stories
+  vigentes con sus Acceptance Criteria, prioridades y personas.
+- **[`docs/PRODUCT_DECISIONS.md`](docs/PRODUCT_DECISIONS.md)** — reglas, decisiones de
+  producto y decisiones todavía abiertas.
+
+El backlog define el comportamiento esperado del producto; este mockup es su referencia
+visual y funcional. Ante una discrepancia entre lo que muestra el mockup y lo que dice el
+backlog, **`docs/BACKLOG.md` es la fuente de verdad**. Una decisión marcada como abierta en
+`docs/PRODUCT_DECISIONS.md` no debe resolverse unilateralmente desde desarrollo — requiere
+una decisión del Product Owner.
