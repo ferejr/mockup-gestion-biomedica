@@ -22,6 +22,11 @@ Está dividido en dos secciones:
 > `urgenciaOriginal`, de modo que aplazar no la reevalúa (coherente con D-01); (2) los
 > manuales se capturan como referencia de texto, porque adjuntar archivos requiere
 > almacenamiento del backend, que el mockup no tiene.
+>
+> HU-02 se amplió después de la primera implementación: al principio la campana solo existía
+> en la app hospitalaria; ahora también existe en el portal de proveedor, con contenido
+> propio para Proveedor de Servicio (eventos de toda su cartera) y Técnico Biomédico de
+> Proveedor (solo eventos de sus propias órdenes) — ver la definición actualizada en HU-02.
 
 ---
 
@@ -97,37 +102,50 @@ duplicarlo. La navegación entre vistas se hace con el mismo mecanismo que usan 
 > Como **usuario con pendientes**, quiero abrir la campana y ver qué requiere mi atención,
 > en vez de depender de los avisos que aparecen solo al iniciar sesión y se desvanecen.
 
-**Situación actual:** el botón de campana en la topbar no tiene `onclick`. Hoy los avisos
-solo existen como *toasts* transitorios al iniciar sesión (`showLoginNotifications()`).
+**Situación actual:** implementado en `js/topbar.js`. La app hospitalaria y el portal de
+proveedor tienen cada uno su propia campana (`#notifBtn`/`#notifPanel` y
+`#provNotifBtn`/`#provNotifPanel`), con contenido propio por rol.
 
 **Alcance decidido — qué debe listar:**
 
 1. **Órdenes urgentes abiertas** — categoría "Urgente emergencia" o "Urgente" que sigan sin
-   cerrarse.
+   cerrarse. (Solo aplica a quien tiene acceso a Órdenes de Mantenimiento del lado hospital.)
 2. **Pendientes del rol del usuario:**
    - Coordinador / Director: aprobaciones esperando su decisión, y órdenes marcadas
      "Resuelto por proveedor" esperando su validación.
    - Técnico: sus propias solicitudes que ya fueron aprobadas, rechazadas o resueltas.
-   - Proveedor: órdenes asignadas abiertas o en proceso.
+   - **Proveedor de Servicio** (administra la cartera completa — no "órdenes asignadas
+     personalmente"): se le notifica cuando (a) se genera una nueva orden de servicio desde
+     cualquiera de sus hospitales cliente, y (b) un hospital valida y cierra una orden que el
+     proveedor había marcado como resuelta.
+   - **Técnico Biomédico de Proveedor** (solo eventos de sus propias órdenes): se le notifica
+     cuando (a) se le asigna una orden, (b) se le reasigna una orden, (c) una orden que tenía
+     asignada se reasigna a otro técnico, y (d) el hospital valida y cierra una orden que él
+     atendió.
 
-**Quedan explícitamente fuera de este release:** checklists sin completar y vencimientos del
-programa preventivo. (El vencimiento preventivo se atiende por otra vía: [HU-04](#hu-04--generación-automática-de-órdenes-imp-programado).)
+**Quedan explícitamente fuera de este release:** checklists sin completar, vencimientos del
+programa preventivo (se atiende por otra vía: [HU-04](#hu-04--generación-automática-de-órdenes-imp-programado)),
+y cualquier notificación de SLA, contratos, costos, recordatorios por tiempo, vencimientos o
+indicadores.
 
 **Criterios de aceptación:**
 
 - La campana muestra un contador con el número de notificaciones activas.
 - Al hacer clic se abre un panel con la lista; cada entrada dice qué pasó y a qué elemento
-  se refiere (folio o equipo).
+  se refiere (folio o equipo, y el hospital cuando aplica).
 - Clic en una notificación navega al elemento correspondiente.
-- El contenido depende del rol: un técnico nunca ve pendientes de aprobación de otros.
+- El contenido depende del rol: un técnico nunca ve pendientes de aprobación de otros; un
+  Técnico Biomédico de Proveedor nunca ve eventos de órdenes que no ha atendido.
 - Si no hay nada pendiente, el panel muestra un estado vacío y el contador no aparece.
 
-**Notas técnicas:** `showLoginNotifications()` (`js/helpers.js:107`) **ya construye una cola
-de notificaciones diferenciada por rol** (`{msg, tone}`), apoyándose en
-`ordenesEmergenciaActivas()` (`js/helpers.js:88`), `equiposNoOperativos()` y
-`pctCumplimientoHoy()`. La historia es extraer esa construcción a una función que devuelva
-la lista y renderizarla en el panel, reutilizándola también para los toasts de inicio de
-sesión — no reimplementar la lógica en paralelo.
+**Notas técnicas:** `showLoginNotifications()` (`js/helpers.js:107`) construye la cola de
+avisos de inicio de sesión (`{msg, tone}`) y sigue siendo la fuente de los *toasts*; el panel
+de la campana usa su propia función, `construirNotificaciones()` (`js/topbar.js`), que no
+reimplementa esa lógica en paralelo sino que reutiliza las mismas fuentes de datos
+(`correctivo`, `solicitudesPendientes`, y `todasLasOrdenesProveedor()` de `js/provider.js`
+para los dos roles del portal de proveedor). Los eventos de asignación/reasignación de
+técnico (caso 2c) se detectan recorriendo `bitacora` de la orden, porque el estado actual del
+campo `tecnico` ya no refleja que el usuario la tuvo asignada antes.
 
 ---
 

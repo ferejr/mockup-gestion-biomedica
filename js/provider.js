@@ -138,6 +138,7 @@ function initProviderPortal(){
   renderProviderPanel();
   renderProviderHospitales();
   renderProviderOrdenesGlobal();
+  renderNotificaciones();
   const vistaInicial = currentRole === 'tecnico_proveedor' ? 'ordenes' : 'panel';
   switchProviderView(vistaInicial);
 }
@@ -480,6 +481,7 @@ function refrescarVistasOrdenProveedor(){
     renderHospitalOrdenesTab(h);
   }
   if(currentProvOrder && currentProvOrder.hospId === 'HOSP-1'){ renderCorrectivo(); renderDashboard(); updateNavBadges(); }
+  renderNotificaciones();
 }
 function cambiarTecnicoOrden(nuevoTecnico){
   if(!currentProvOrder || currentRole !== 'proveedor') return;
