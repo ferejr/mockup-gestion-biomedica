@@ -1,6 +1,7 @@
 /* ===================== TOPBAR: CENTRO DE NOTIFICACIONES =====================
-   Solo existe en la app hospitalaria: el portal de proveedor tiene su propia barra
-   superior, sin campana. */
+   Existe en las dos aplicaciones: la hospitalaria (campana #notifBtn/#notifPanel) y el
+   portal de proveedor (#provNotifBtn/#provNotifPanel), con su propio contenido por rol —
+   ver idsNotifPanel() e HU-02 en docs/BACKLOG.md. */
 
 /* ---- Navegación ----
    Cambiar de vista desde código equivale a hacer clic en el botón del menú: así se
@@ -16,11 +17,22 @@ function rolPuedeVerVista(view){
   return (btn.dataset.roles || '').split(',').includes(currentRole);
 }
 
+// IDs del botón/badge/panel que corresponden a la app activa según el rol.
+function idsNotifPanel(){
+  return esRolProveedor()
+    ? {btn:'provNotifBtn', badge:'provNotifBadge', panel:'provNotifPanel'}
+    : {btn:'notifBtn', badge:'notifBadge', panel:'notifPanel'};
+}
+
 function cerrarPanelesTopbar(){
-  const notif = document.getElementById('notifPanel');
-  if(notif) notif.classList.remove('active');
-  const btn = document.getElementById('notifBtn');
-  if(btn) btn.classList.remove('active');
+  ['notifPanel','provNotifPanel'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.classList.remove('active');
+  });
+  ['notifBtn','provNotifBtn'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.classList.remove('active');
+  });
 }
 
 function abrirNotificacionOrden(folio){
@@ -32,6 +44,11 @@ function abrirNotificacionSolicitud(tab){
   cerrarPanelesTopbar();
   irAVista('revisiones');
   switchRevTab(tab);
+}
+function abrirNotificacionOrdenProveedor(hospId, folio){
+  cerrarPanelesTopbar();
+  switchProviderView('ordenes');
+  openProviderOrderModal(hospId, folio);
 }
 
 /* ---- Contenido del centro de notificaciones ----
@@ -93,6 +110,80 @@ function construirNotificaciones(){
       });
   }
 
+  // 3. Proveedor de Servicio: administra la cartera completa, así que sus notificaciones
+  // son eventos de las órdenes de TODOS sus hospitales cliente, no "asignadas a él".
+  if(currentRole === 'proveedor'){
+    const todas = todasLasOrdenesProveedor();
+
+    todas.filter(o => o.estado === 'Abierta').forEach(o => {
+      const h = hospitalById(o.hospId);
+      items.push({
+        tono: 'info', titulo: 'Nueva orden de servicio',
+        texto: (h ? h.nombre + ' · ' : '') + o.equipoNombre + ' · ' + o.folio,
+        accion: "abrirNotificacionOrdenProveedor('" + o.hospId + "','" + o.folio + "')"
+      });
+    });
+
+    todas.filter(o => o.estado === 'Cerrada' && o.resueltoPor).forEach(o => {
+      const h = hospitalById(o.hospId);
+      items.push({
+        tono: 'success', titulo: 'Orden validada y cerrada por el hospital',
+        texto: (h ? h.nombre + ' · ' : '') + o.equipoNombre + ' · ' + o.folio,
+        accion: "abrirNotificacionOrdenProveedor('" + o.hospId + "','" + o.folio + "')"
+      });
+    });
+  }
+
+  // 4. Técnico Biomédico de Proveedor: solo eventos de sus propias órdenes.
+  if(currentRole === 'tecnico_proveedor'){
+    const miNombre = USER_ROLES[currentUser].nombreCompleto;
+    const todas = todasLasOrdenesProveedor();
+
+    // Asignación inicial o reasignación hacia él: se refleja en el estado actual.
+    todas.filter(o => o.tecnico === miNombre && o.estado !== 'Cerrada').forEach(o => {
+      const h = hospitalById(o.hospId);
+      items.push({
+        tono: 'info', titulo: 'Orden asignada a ti',
+        texto: (h ? h.nombre + ' · ' : '') + o.equipoNombre + ' · ' + o.folio,
+        accion: "abrirNotificacionOrdenProveedor('" + o.hospId + "','" + o.folio + "')"
+      });
+    });
+
+    // Reasignada a otro técnico: el estado actual ya no lo refleja, hay que
+    // recorrer la bitácora para encontrar el momento en que dejó de ser él.
+    todas.forEach(o => {
+      let asignadoActual = null, perdida = false;
+      (o.bitacora || []).forEach(b => {
+        if(b.evento.indexOf('Técnico asignado: ') === 0){
+          const nuevo = b.evento.slice('Técnico asignado: '.length).replace(/\.$/, '');
+          if(asignadoActual === miNombre && nuevo !== miNombre) perdida = true;
+          asignadoActual = nuevo;
+        } else if(b.evento === 'Técnico desasignado de la orden.'){
+          if(asignadoActual === miNombre) perdida = true;
+          asignadoActual = null;
+        }
+      });
+      if(perdida && o.tecnico !== miNombre){
+        const h = hospitalById(o.hospId);
+        items.push({
+          tono: 'warning', titulo: 'Ya no tienes esta orden asignada',
+          texto: (h ? h.nombre + ' · ' : '') + o.equipoNombre + ' · ' + o.folio,
+          accion: "abrirNotificacionOrdenProveedor('" + o.hospId + "','" + o.folio + "')"
+        });
+      }
+    });
+
+    // El hospital validó y cerró una orden que él atendió.
+    todas.filter(o => o.tecnico === miNombre && o.estado === 'Cerrada').forEach(o => {
+      const h = hospitalById(o.hospId);
+      items.push({
+        tono: 'success', titulo: 'El hospital validó y cerró tu orden',
+        texto: (h ? h.nombre + ' · ' : '') + o.equipoNombre + ' · ' + o.folio,
+        accion: "abrirNotificacionOrdenProveedor('" + o.hospId + "','" + o.folio + "')"
+      });
+    });
+  }
+
   return items;
 }
 
@@ -104,8 +195,9 @@ const NOTIF_ICONOS = {
 };
 
 function renderNotificaciones(){
-  const badge = document.getElementById('notifBadge');
-  const panel = document.getElementById('notifPanel');
+  const ids = idsNotifPanel();
+  const badge = document.getElementById(ids.badge);
+  const panel = document.getElementById(ids.panel);
   if(!badge || !panel) return;
 
   const items = construirNotificaciones();
@@ -139,8 +231,9 @@ function renderNotificaciones(){
 }
 
 function toggleNotificaciones(){
-  const panel = document.getElementById('notifPanel');
-  const btn = document.getElementById('notifBtn');
+  const ids = idsNotifPanel();
+  const panel = document.getElementById(ids.panel);
+  const btn = document.getElementById(ids.btn);
   if(!panel) return;
   const abierto = panel.classList.contains('active');
   cerrarPanelesTopbar();
